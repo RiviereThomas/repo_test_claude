@@ -7,6 +7,7 @@ from typing import List, Optional, Dict, Any
 import pandas as pd
 from sqlalchemy import text
 import dwh_connect
+import eet_calculator
 
 app = FastAPI(title="Regulatory Reports Administration")
 
@@ -144,6 +145,21 @@ async def get_validation_requests(status: Optional[str] = None):
         return df.to_dict('records')
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des demandes: {str(e)}")
+
+
+@app.get("/api/fund-results/{fund}")
+async def get_fund_results(fund: str, version: Optional[str] = 'EET_1_1_3', date_calcul: Optional[str] = '31/12/2024'):
+    """Calcule et retourne les résultats EET pour un fonds donné"""
+    try:
+        results = eet_calculator.calculate_fund_results(fund, version, date_calcul)
+        return {
+            "fund": fund,
+            "version": version,
+            "date_calcul": date_calcul,
+            "results": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors du calcul des résultats: {str(e)}")
 
 
 @app.get("/health")

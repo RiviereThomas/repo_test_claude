@@ -8,7 +8,10 @@ const state = {
     sortColumn: null,      // Colonne de tri actuelle
     sortDirection: 'asc',  // Direction du tri
     versions: [],
-    filedInValues: []
+    filedInValues: [],
+    funds: [],             // Liste des fonds disponibles
+    fundResults: {},       // Résultats du fonds sélectionné {field_name: result}
+    selectedFund: null     // Fonds sélectionné
 };
 
 // Initialisation au chargement de la page
@@ -20,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Initialisation de l'application
 async function initializeApp() {
     await loadVersions();
+    await loadFunds();
     await loadAllEETFields();
 
     // Appliquer les filtres par défaut (version EET_1_1_3)
@@ -35,6 +39,7 @@ function setupEventListeners() {
     const versionFilter = document.getElementById('version-filter');
     const fixedValueFilter = document.getElementById('fixed-value-filter');
     const filedInFilter = document.getElementById('filed-in-filter');
+    const fundFilter = document.getElementById('fund-filter');
 
     applyFiltersBtn.addEventListener('click', applyFilters);
     resetFiltersBtn.addEventListener('click', resetFilters);
@@ -45,6 +50,7 @@ function setupEventListeners() {
     versionFilter.addEventListener('change', applyFilters);
     fixedValueFilter.addEventListener('change', applyFilters);
     filedInFilter.addEventListener('change', applyFilters);
+    fundFilter.addEventListener('change', handleFundChange);
 
     // Gestion du tri sur les colonnes
     const headers = document.querySelectorAll('th.sortable');
@@ -127,6 +133,66 @@ function populateFiledInFilter() {
         option.textContent = value;
         select.appendChild(option);
     });
+}
+
+// Chargement de la liste des fonds
+async function loadFunds() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/funds`);
+        if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+
+        state.funds = await response.json();
+        populateFundsFilter();
+    } catch (error) {
+        showError(`Erreur lors du chargement des fonds: ${error.message}`);
+    }
+}
+
+// Remplir le filtre de fonds
+function populateFundsFilter() {
+    const select = document.getElementById('fund-filter');
+    state.funds.forEach(fund => {
+        const option = document.createElement('option');
+        option.value = fund.Mnemo_Fund;
+        option.textContent = `${fund.Mnemo_Fund} - ${fund.Lib_Fund}`;
+        select.appendChild(option);
+    });
+}
+
+// Gestion du changement de fonds
+async function handleFundChange() {
+    const fundSelect = document.getElementById('fund-filter');
+    const selectedFund = fundSelect.value;
+
+    if (selectedFund) {
+        state.selectedFund = selectedFund;
+        await loadFundResults(selectedFund);
+    } else {
+        state.selectedFund = null;
+        state.fundResults = {};
+    }
+
+    // Re-render le tableau avec ou sans résultats
+    renderTable();
+}
+
+// Charger les résultats d'un fonds
+async function loadFundResults(fund) {
+    try {
+        showLoading(true);
+        const versionFilter = document.getElementById('version-filter').value || 'EET_1_1_3';
+        const response = await fetch(`${API_BASE_URL}/fund-results/${fund}?version=${versionFilter}`);
+
+        if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+
+        const data = await response.json();
+        state.fundResults = data.results;
+        showLoading(false);
+    } catch (error) {
+        showError(`Erreur lors du chargement des résultats: ${error.message}`);
+        state.fundResults = {};
+        showLoading(false);
+    }
 }
 
 // Application des filtres
@@ -226,12 +292,15 @@ function renderTable() {
     const tbody = document.getElementById('table-body');
 
     if (state.filteredData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="no-data">Aucune donnée correspondante</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="no-data">Aucune donnée correspondante</td></tr>';
         return;
     }
 
     tbody.innerHTML = '';
     state.filteredData.forEach(item => {
+        const result = state.fundResults[item.field_name] || '';
+        const resultClass = state.selectedFund ? 'result-value' : 'result-empty';
+
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${item.version || ''}</td>
@@ -242,6 +311,7 @@ function renderTable() {
             <td>${item.requirement_type || ''}</td>
             <td>${item.format || ''}</td>
             <td class="remarks">${item.remarques || ''}</td>
+            <td class="${resultClass}">${result}</td>
         `;
         tbody.appendChild(row);
     });

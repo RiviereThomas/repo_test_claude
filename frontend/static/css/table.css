@@ -274,6 +274,7 @@
 .col-requirement { min-width: 150px; width: 150px; }
 .col-format { min-width: 190px; width: 190px; }
 .col-remarks { min-width: 300px; }
+.col-result { min-width: 200px; width: 200px; }
 
 .data-table td {
     padding: 0.75rem 1rem;
@@ -320,6 +321,18 @@
     overflow: hidden;
     text-overflow: ellipsis;
     color: var(--text-secondary);
+}
+
+/* Colonne Résultat */
+.result-value {
+    font-weight: 600;
+    color: var(--orange);
+    background: rgba(247, 173, 0, 0.1);
+}
+
+.result-empty {
+    color: var(--text-secondary);
+    font-style: italic;
 }
 
 .no-data {

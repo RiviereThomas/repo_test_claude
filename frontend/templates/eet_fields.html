@@ -32,6 +32,13 @@
             </div>
 
             <div class="filter-item">
+                <label>Fonds (pour résultats)</label>
+                <select id="fund-filter">
+                    <option value="">Aucun - Métadonnées seulement</option>
+                </select>
+            </div>
+
+            <div class="filter-item">
                 <label>Valeur Fixe</label>
                 <select id="fixed-value-filter">
                     <option value="">Tous</option>
@@ -120,11 +127,16 @@
                             <span class="sort-icon">⇅</span>
                         </div>
                     </th>
+                    <th data-column="result" class="col-result">
+                        <div class="th-content">
+                            <span>Résultat</span>
+                        </div>
+                    </th>
                 </tr>
             </thead>
             <tbody id="table-body">
                 <tr>
-                    <td colspan="8" class="no-data">Chargement des données...</td>
+                    <td colspan="9" class="no-data">Chargement des données...</td>
                 </tr>
             </tbody>
         </table>
