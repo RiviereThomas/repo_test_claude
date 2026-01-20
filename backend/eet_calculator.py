@@ -111,73 +111,77 @@ def query_return(query_string, mavar, eet_field=None, override=False, key_fund=N
     return result
 
 
-def Calcul_df_final(funds, EET_version, date_calcul='31/12/2024'):
-    """Calcule le dataframe final avec les résultats pour chaque fonds"""
-    df_calcul = EET_version
+def Calcul_df_final(fund, EET_version, date_calcul='31/12/2024'):
+    """Calcule le dataframe final avec les résultats pour un seul fonds (première part uniquement)"""
+    df_calcul = EET_version.copy()
     cnxn = dc.connect_dwh()
 
-    for fund in funds:
-        keyfund = get_datafunds(fund, 'Key_Fund')
-        lib_fund = get_datafunds(fund, 'Lib_Fund')
-        lib_fund_str = lib_fund.replace(' ', '-').lower()
+    # Récupération des infos du fonds
+    keyfund = get_datafunds(fund, 'Key_Fund')
+    lib_fund = get_datafunds(fund, 'Lib_Fund')
+    lib_fund_str = lib_fund.replace(' ', '-').lower()
 
-        liste_part = get_active_part(fund)
-        col_dep = df_calcul.shape[1]
+    # Récupérer uniquement la première part active
+    liste_part = get_active_part(fund)
+    if not liste_part:
+        # Si aucune part, on utilise le fonds lui-même
+        first_part = fund
+    else:
+        first_part = liste_part[0]
 
-        for part in liste_part:
-            df_calcul.insert(df_calcul.shape[1], part, [None] * len(df_calcul))
-        col_fin = df_calcul.shape[1]
+    # Ajouter une seule colonne pour la première part
+    col_dep = df_calcul.shape[1]
+    df_calcul.insert(df_calcul.shape[1], first_part, [None] * len(df_calcul))
+    col_fin = df_calcul.shape[1]
 
-        # Gestion des valeurs fixes
-        fixed_value_rows = df_calcul['is_fixed_value'] == '1'
-        for col in df_calcul.columns[col_dep:col_fin]:
-            df_calcul.loc[fixed_value_rows, col] = df_calcul.loc[fixed_value_rows, 'value_source']
+    column = first_part  # On travaille uniquement avec cette colonne
 
-        # Gestion des dates
-        fixed_value_rows = df_calcul['value_source'] == 'Date(now)'
-        for col in df_calcul.columns[col_dep:col_fin]:
-            df_calcul.loc[fixed_value_rows, col] = dt.date.today()
+    # Gestion des valeurs fixes
+    fixed_value_rows = df_calcul['is_fixed_value'] == '1'
+    df_calcul.loc[fixed_value_rows, column] = df_calcul.loc[fixed_value_rows, 'value_source']
 
-        fixed_value_rows = df_calcul['value_source'] == 'Date(calcul)'
-        for col in df_calcul.columns[col_dep:col_fin]:
-            df_calcul.loc[fixed_value_rows, col] = date_calcul
+    # Gestion des dates
+    date_now_rows = df_calcul['value_source'] == 'Date(now)'
+    df_calcul.loc[date_now_rows, column] = dt.date.today()
 
-        # Calculs pour chaque colonne
-        for column in df_calcul.columns[col_dep:col_fin]:
-            # Ref_funds
-            df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE ref_funds;', na=False), column] = \
-                df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE ref_funds;', na=False)].apply(
-                    lambda row: query_return(row['value_source'], [fund], connect=cnxn), axis=1)
+    date_calcul_rows = df_calcul['value_source'] == 'Date(calcul)'
+    df_calcul.loc[date_calcul_rows, column] = date_calcul
 
-            df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE ref_funds_p', na=False), column] = \
-                df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE ref_funds_p', na=False)].apply(
-                    lambda row: query_return(row['value_source'], [column], connect=cnxn), axis=1)
+    # Calculs pour la colonne
+    # Ref_funds
+    df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE ref_funds;', na=False), column] = \
+        df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE ref_funds;', na=False)].apply(
+            lambda row: query_return(row['value_source'], [fund], connect=cnxn), axis=1)
 
-            # tb_eet_data
-            df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE tb_eet_data;', na=False), column] = \
-                df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE tb_eet_data;', na=False)].apply(
-                    lambda row: query_return(row['value_source'], [keyfund, row['field_name']], connect=cnxn), axis=1)
+    df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE ref_funds_p', na=False), column] = \
+        df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE ref_funds_p', na=False)].apply(
+            lambda row: query_return(row['value_source'], [column], connect=cnxn), axis=1)
 
-            # URLs https
-            df_calcul.loc[df_calcul['value_source'].str.startswith('https://', na=False), column] = \
-                df_calcul.loc[df_calcul['value_source'].str.startswith('https://', na=False)].apply(
-                    lambda row: row['value_source'].replace('[mavar]', lib_fund_str), axis=1)
+    # tb_eet_data
+    df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE tb_eet_data;', na=False), column] = \
+        df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE tb_eet_data;', na=False)].apply(
+            lambda row: query_return(row['value_source'], [keyfund, row['field_name']], connect=cnxn), axis=1)
 
-            # Tb_ESG_Histo_Ptf
-            df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE Tb_ESG_Histo_Ptf', na=False), column] = \
-                df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE Tb_ESG_Histo_Ptf', na=False)].apply(
-                    lambda row: query_return(row['value_source'], [fund, date_calcul],
-                                           eet_field=row['field_name'], override=True,
-                                           key_fund=keyfund, connect=cnxn), axis=1)
+    # URLs https
+    df_calcul.loc[df_calcul['value_source'].str.startswith('https://', na=False), column] = \
+        df_calcul.loc[df_calcul['value_source'].str.startswith('https://', na=False)].apply(
+            lambda row: row['value_source'].replace('[mavar]', lib_fund_str), axis=1)
 
-            # tb_esg_calculs_indicateurs
-            df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE tb_esg_calculs_indicateurs', na=False), column] = \
-                df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE tb_esg_calculs_indicateurs', na=False)].apply(
-                    lambda row: query_return(row['value_source'], [fund, date_calcul],
-                                           eet_field=row['field_name'], connect=cnxn), axis=1)
+    # Tb_ESG_Histo_Ptf
+    df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE Tb_ESG_Histo_Ptf', na=False), column] = \
+        df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE Tb_ESG_Histo_Ptf', na=False)].apply(
+            lambda row: query_return(row['value_source'], [fund, date_calcul],
+                                   eet_field=row['field_name'], override=True,
+                                   key_fund=keyfund, connect=cnxn), axis=1)
+
+    # tb_esg_calculs_indicateurs
+    df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE tb_esg_calculs_indicateurs', na=False), column] = \
+        df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE tb_esg_calculs_indicateurs', na=False)].apply(
+            lambda row: query_return(row['value_source'], [fund, date_calcul],
+                                   eet_field=row['field_name'], connect=cnxn), axis=1)
 
     df_tmp = df_calcul
-    df_calcul = df_calcul[['field_name'] + list(df_calcul.columns[9:])]
+    df_calcul = df_calcul[['field_name'] + list(df_calcul.columns[col_dep:col_fin])]
     return df_calcul, df_tmp
 
 
@@ -188,7 +192,7 @@ def calculate_fund_results(fund, version='EET_1_1_3', date_calcul='31/12/2024'):
     """
     try:
         df_eet = get_eet_fields(version)
-        df_final, df_tmp = Calcul_df_final([fund], df_eet, date_calcul)
+        df_final, df_tmp = Calcul_df_final(fund, df_eet, date_calcul)  # Plus de liste, un seul fonds
 
         # Créer un dictionnaire field_name -> résultat
         # On prend la première colonne de résultat (après field_name)
@@ -203,4 +207,6 @@ def calculate_fund_results(fund, version='EET_1_1_3', date_calcul='31/12/2024'):
         return results
     except Exception as e:
         print(f"Erreur dans calculate_fund_results: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {}
