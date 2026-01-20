@@ -229,6 +229,9 @@ function renderTable() {
         `;
         tbody.appendChild(row);
     });
+
+    // Ajouter les event listeners pour tooltip et menu contextuel
+    setupCellInteractions();
 }
 
 // Mise à jour du compteur de lignes
@@ -283,6 +286,143 @@ function exportToCSV() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+// ===== INTERACTIONS CELLULES (Tooltip + Menu Contextuel) =====
+let currentCell = null;
+
+function setupCellInteractions() {
+    const cells = document.querySelectorAll('.data-table tbody td');
+    const tooltip = document.getElementById('cell-tooltip');
+    const contextMenu = document.getElementById('context-menu');
+
+    cells.forEach(cell => {
+        // Tooltip au survol
+        cell.addEventListener('mouseenter', (e) => {
+            const cellText = cell.textContent.trim();
+            if (cellText && cellText !== '') {
+                tooltip.textContent = cellText;
+                tooltip.style.display = 'block';
+                positionTooltip(e, tooltip);
+            }
+        });
+
+        cell.addEventListener('mousemove', (e) => {
+            if (tooltip.style.display === 'block') {
+                positionTooltip(e, tooltip);
+            }
+        });
+
+        cell.addEventListener('mouseleave', () => {
+            tooltip.style.display = 'none';
+        });
+
+        // Menu contextuel au clic droit
+        cell.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            currentCell = cell;
+            showContextMenu(e, contextMenu);
+        });
+    });
+
+    // Fermer le menu contextuel en cliquant ailleurs
+    document.addEventListener('click', () => {
+        contextMenu.style.display = 'none';
+    });
+
+    // Action de copie
+    document.getElementById('copy-cell').addEventListener('click', () => {
+        if (currentCell) {
+            copyToClipboard(currentCell.textContent.trim());
+            contextMenu.style.display = 'none';
+        }
+    });
+}
+
+// Positionner le tooltip près du curseur
+function positionTooltip(e, tooltip) {
+    const offset = 15;
+    let x = e.clientX + offset;
+    let y = e.clientY + offset;
+
+    // Vérifier si le tooltip dépasse l'écran
+    const tooltipRect = tooltip.getBoundingClientRect();
+    if (x + tooltipRect.width > window.innerWidth) {
+        x = e.clientX - tooltipRect.width - offset;
+    }
+    if (y + tooltipRect.height > window.innerHeight) {
+        y = e.clientY - tooltipRect.height - offset;
+    }
+
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+}
+
+// Afficher le menu contextuel
+function showContextMenu(e, menu) {
+    const x = e.clientX;
+    const y = e.clientY;
+
+    // Positionner le menu
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+    menu.style.display = 'block';
+
+    // Ajuster si dépasse l'écran
+    setTimeout(() => {
+        const menuRect = menu.getBoundingClientRect();
+        if (menuRect.right > window.innerWidth) {
+            menu.style.left = (x - menuRect.width) + 'px';
+        }
+        if (menuRect.bottom > window.innerHeight) {
+            menu.style.top = (y - menuRect.height) + 'px';
+        }
+    }, 0);
+}
+
+// Copier dans le presse-papier
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        showCopyNotification();
+    } catch (err) {
+        // Fallback pour les anciens navigateurs
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showCopyNotification();
+    }
+}
+
+// Notification de copie
+function showCopyNotification() {
+    const notification = document.createElement('div');
+    notification.textContent = '✓ Copié !';
+    notification.style.cssText = `
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: var(--vert-fonce);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 3000;
+        font-weight: 600;
+        animation: slideUp 0.3s ease-out;
+    `;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s';
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
 }
 
 // Fonction de debounce pour la recherche

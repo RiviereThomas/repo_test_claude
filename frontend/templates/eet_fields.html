@@ -35,8 +35,8 @@
                 <label>Valeur Fixe</label>
                 <select id="fixed-value-filter">
                     <option value="">Tous</option>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
+                    <option value="1">1 (Oui)</option>
+                    <option value="0">0 (Non)</option>
                 </select>
             </div>
 
@@ -128,6 +128,16 @@
                 </tr>
             </tbody>
         </table>
+    </div>
+
+    <!-- Tooltip pour afficher le contenu complet -->
+    <div id="cell-tooltip" class="cell-tooltip" style="display: none;"></div>
+
+    <!-- Menu contextuel pour copier -->
+    <div id="context-menu" class="context-menu" style="display: none;">
+        <div class="context-menu-item" id="copy-cell">
+            <span>📋</span> Copier le contenu
+        </div>
     </div>
 
     <script src="/static/js/eet_fields.js"></script>
