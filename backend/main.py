@@ -55,6 +55,13 @@ async def read_root():
         return f.read()
 
 
+@app.get("/eet-fields-viewer", response_class=HTMLResponse)
+async def eet_fields_viewer():
+    """Page de visualisation complète des champs EET"""
+    with open("../frontend/templates/eet_fields.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+
 @app.get("/api/funds", response_model=List[Fund])
 async def get_funds():
     """Récupère la liste de tous les fonds"""

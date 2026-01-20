@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualisation des Champs EET</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/table.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>📊 Champs EET - Visualisation Complète</h1>
+            <p class="subtitle">Tableau interactif avec tri et filtrage</p>
+            <nav class="breadcrumb">
+                <a href="/">← Retour à l'accueil</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Section de filtres -->
+        <section class="card">
+            <h2>Filtres et Options</h2>
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label for="version-filter">Version :</label>
+                    <select id="version-filter" class="select-input">
+                        <option value="">Toutes les versions</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="fixed-value-filter">Valeur Fixe :</label>
+                    <select id="fixed-value-filter" class="select-input">
+                        <option value="">Tous</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filed-in-filter">Filed In :</label>
+                    <select id="filed-in-filter" class="select-input">
+                        <option value="">Tous</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="search-field">Recherche par nom :</label>
+                    <input type="text" id="search-field" class="select-input" placeholder="Rechercher un champ...">
+                </div>
+
+                <div class="filter-actions">
+                    <button id="apply-filters-btn" class="btn btn-primary">Appliquer les filtres</button>
+                    <button id="reset-filters-btn" class="btn btn-secondary">Réinitialiser</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section du tableau -->
+        <section class="card">
+            <div class="table-header">
+                <h2>Résultats</h2>
+                <div class="table-info">
+                    <span id="row-count">0 lignes</span>
+                    <button id="export-btn" class="btn btn-secondary">Exporter CSV</button>
+                </div>
+            </div>
+
+            <div id="loading" style="display: none;">
+                <p>Chargement des données...</p>
+            </div>
+
+            <div id="error-message" class="error-message" style="display: none;"></div>
+
+            <div class="table-wrapper">
+                <table id="eet-table" class="sortable-table">
+                    <thead>
+                        <tr>
+                            <th data-column="version" class="sortable">
+                                Version <span class="sort-icon">⇅</span>
+                            </th>
+                            <th data-column="field_name" class="sortable">
+                                Nom du Champ <span class="sort-icon">⇅</span>
+                            </th>
+                            <th data-column="is_fixed_value" class="sortable">
+                                Valeur Fixe <span class="sort-icon">⇅</span>
+                            </th>
+                            <th data-column="value_source" class="sortable">
+                                Source <span class="sort-icon">⇅</span>
+                            </th>
+                            <th data-column="is_filed_in" class="sortable">
+                                Filed In <span class="sort-icon">⇅</span>
+                            </th>
+                            <th data-column="requirement_type" class="sortable">
+                                Type Requis <span class="sort-icon">⇅</span>
+                            </th>
+                            <th data-column="format" class="sortable">
+                                Format <span class="sort-icon">⇅</span>
+                            </th>
+                            <th data-column="remarques" class="sortable">
+                                Remarques <span class="sort-icon">⇅</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <tr>
+                            <td colspan="8" class="no-data">Aucune donnée disponible. Appliquez les filtres pour charger.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 - Administration des Rapports Réglementaires</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/eet_fields.js"></script>
+</body>
+</html>

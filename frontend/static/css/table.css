@@ -1,0 +1,221 @@
+/* Styles spécifiques pour le tableau EET Fields */
+
+/* Filtres */
+.filters-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.filter-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-start;
+    margin-top: 1rem;
+}
+
+/* En-tête du tableau */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.table-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.table-info span {
+    color: #666;
+    font-weight: 600;
+}
+
+/* Navigation */
+.breadcrumb {
+    margin-top: 1rem;
+}
+
+.breadcrumb a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s;
+}
+
+.breadcrumb a:hover {
+    color: #5568d3;
+    text-decoration: underline;
+}
+
+/* Wrapper du tableau */
+.table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+/* Tableau triable */
+.sortable-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.sortable-table thead {
+    background: #667eea;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.sortable-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+    border-bottom: 2px solid #5568d3;
+}
+
+.sortable-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s;
+}
+
+.sortable-table th.sortable:hover {
+    background: #5568d3;
+}
+
+.sortable-table th.sorted {
+    background: #5568d3;
+}
+
+.sort-icon {
+    display: inline-block;
+    margin-left: 0.5rem;
+    font-size: 0.9em;
+    opacity: 0.7;
+}
+
+.sortable-table th.sorted .sort-icon {
+    opacity: 1;
+    font-weight: bold;
+}
+
+.sortable-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.sortable-table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.sortable-table tbody tr:hover {
+    background-color: #f5f7ff;
+}
+
+.sortable-table tbody tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+.sortable-table tbody tr:nth-child(even):hover {
+    background-color: #f5f7ff;
+}
+
+/* Colonnes spécifiques */
+.field-name {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.centered {
+    text-align: center;
+}
+
+.remarks {
+    max-width: 300px;
+    word-wrap: break-word;
+}
+
+.no-data {
+    text-align: center;
+    padding: 2rem;
+    color: #888;
+    font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .filters-container {
+        grid-template-columns: 1fr;
+    }
+
+    .table-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .table-info {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .sortable-table {
+        font-size: 0.85rem;
+    }
+
+    .sortable-table th,
+    .sortable-table td {
+        padding: 0.5rem;
+    }
+
+    .filter-actions {
+        flex-direction: column;
+    }
+
+    .filter-actions button {
+        width: 100%;
+    }
+}
+
+/* Amélioration du scroll */
+.table-wrapper::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
