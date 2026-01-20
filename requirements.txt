@@ -1,0 +1,18 @@
+# FastAPI et serveur
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Base de données
+pyodbc==5.0.1
+sqlalchemy==2.0.25
+pandas==2.1.4
+
+# Validation et types
+pydantic==2.5.3
+
+# CORS et sécurité
+python-dotenv==1.0.0
+
+# Optionnel pour Sustainalytics (si nécessaire)
+# sustainalytics==x.x.x

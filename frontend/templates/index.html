@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration des Rapports Réglementaires</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>📊 Administration des Rapports Réglementaires</h1>
+            <p class="subtitle">Gestion des templates et validation des données</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Section de sélection de fonds -->
+        <section class="card">
+            <h2>1. Sélection du Fonds</h2>
+            <div class="form-group">
+                <label for="fund-select">Choisir un fonds :</label>
+                <select id="fund-select" class="select-input">
+                    <option value="">-- Chargement des fonds... --</option>
+                </select>
+            </div>
+            <div id="fund-info" class="info-box" style="display: none;">
+                <h3>Fonds sélectionné</h3>
+                <p><strong>Mnémonique :</strong> <span id="selected-mnemo"></span></p>
+                <p><strong>Libellé :</strong> <span id="selected-lib"></span></p>
+            </div>
+        </section>
+
+        <!-- Section de sélection de version EET -->
+        <section class="card">
+            <h2>2. Template de Reporting (EET Fields)</h2>
+            <div class="form-group">
+                <label for="version-select">Choisir une version :</label>
+                <select id="version-select" class="select-input">
+                    <option value="">-- Sélectionner une version --</option>
+                </select>
+                <button id="load-fields-btn" class="btn btn-primary">Charger les champs</button>
+            </div>
+        </section>
+
+        <!-- Section d'affichage des champs EET -->
+        <section class="card">
+            <h2>3. Visualisation des Champs</h2>
+            <div id="loading" style="display: none;">
+                <p>Chargement des données...</p>
+            </div>
+            <div id="error-message" class="error-message" style="display: none;"></div>
+            <div id="fields-container">
+                <p class="hint">Sélectionnez une version et cliquez sur "Charger les champs" pour afficher les données.</p>
+            </div>
+        </section>
+
+        <!-- Section de validation (à développer plus tard) -->
+        <section class="card">
+            <h2>4. Demandes de Validation</h2>
+            <p class="hint">Cette section permettra de gérer les demandes de validation pour les modifications de données.</p>
+            <button id="view-requests-btn" class="btn btn-secondary">Voir les demandes en attente</button>
+            <div id="validation-requests" style="display: none;">
+                <table id="requests-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Table</th>
+                            <th>Statut</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 - Administration des Rapports Réglementaires</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
