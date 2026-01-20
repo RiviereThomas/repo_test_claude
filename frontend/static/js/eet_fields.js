@@ -301,7 +301,7 @@ function debounce(func, wait) {
 // Affichage du loader
 function showLoading(show) {
     const loading = document.getElementById('loading');
-    loading.style.display = show ? 'block' : 'none';
+    loading.style.display = show ? 'flex' : 'none';
 }
 
 // Affichage des erreurs
