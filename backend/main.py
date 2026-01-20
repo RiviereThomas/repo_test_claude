@@ -63,6 +63,13 @@ async def eet_fields_viewer():
         return f.read()
 
 
+@app.get("/debug-results", response_class=HTMLResponse)
+async def debug_results():
+    """Page de débogage pour les résultats EET"""
+    with open("../frontend/templates/debug_results.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+
 @app.get("/api/funds", response_model=List[Fund])
 async def get_funds():
     """Récupère la liste de tous les fonds"""
