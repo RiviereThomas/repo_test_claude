@@ -266,12 +266,12 @@
 
 /* Largeurs des colonnes */
 .col-version { min-width: 120px; width: 120px; }
-.col-field-name { min-width: 170px; width: 170px; }
+.col-field-name { min-width: 340px; width: 340px; }
 .col-fixed { min-width: 100px; width: 100px; text-align: center; }
-.col-source { min-width: 200px; width: 200px; }
+.col-source { min-width: 250px; width: 250px; }
 .col-filed { min-width: 120px; width: 120px; text-align: center; }
 .col-requirement { min-width: 150px; width: 150px; }
-.col-format { min-width: 150px; width: 150px; }
+.col-format { min-width: 190px; width: 190px; }
 .col-remarks { min-width: 300px; }
 
 .data-table td {

@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initializeApp() {
     await loadVersions();
     await loadAllEETFields();
+
+    // Appliquer les filtres par défaut (version EET_1_1_3)
+    applyFilters();
 }
 
 // Configuration des écouteurs d'événements
@@ -65,6 +68,11 @@ function populateVersionsFilter() {
         option.textContent = version;
         select.appendChild(option);
     });
+
+    // Sélectionner EET_1_1_3 par défaut si disponible
+    if (state.versions.includes('EET_1_1_3')) {
+        select.value = 'EET_1_1_3';
+    }
 }
 
 // Chargement de tous les champs EET
