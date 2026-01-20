@@ -202,7 +202,18 @@ def calculate_fund_results(fund, version='EET_1_1_3', date_calcul='31/12/2024'):
             for idx, row in df_final.iterrows():
                 field_name = row['field_name']
                 result_value = row[result_column]
-                results[field_name] = result_value if pd.notna(result_value) else ''
+
+                # Convertir en type JSON-serializable
+                if pd.notna(result_value):
+                    # Convertir datetime/date en string
+                    if isinstance(result_value, (dt.date, dt.datetime, pd.Timestamp)):
+                        result_value = str(result_value)
+                    # Convertir les types numpy en types Python natifs
+                    elif hasattr(result_value, 'item'):
+                        result_value = result_value.item()
+                    results[field_name] = result_value
+                else:
+                    results[field_name] = ''
 
         return results
     except Exception as e:
