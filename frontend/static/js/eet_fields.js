@@ -32,11 +32,19 @@ function setupEventListeners() {
     const resetFiltersBtn = document.getElementById('reset-filters-btn');
     const exportBtn = document.getElementById('export-btn');
     const searchField = document.getElementById('search-field');
+    const versionFilter = document.getElementById('version-filter');
+    const fixedValueFilter = document.getElementById('fixed-value-filter');
+    const filedInFilter = document.getElementById('filed-in-filter');
 
     applyFiltersBtn.addEventListener('click', applyFilters);
     resetFiltersBtn.addEventListener('click', resetFilters);
     exportBtn.addEventListener('click', exportToCSV);
     searchField.addEventListener('input', debounce(applyFilters, 300));
+
+    // Auto-update au changement des filtres
+    versionFilter.addEventListener('change', applyFilters);
+    fixedValueFilter.addEventListener('change', applyFilters);
+    filedInFilter.addEventListener('change', applyFilters);
 
     // Gestion du tri sur les colonnes
     const headers = document.querySelectorAll('th.sortable');

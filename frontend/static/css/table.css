@@ -37,9 +37,9 @@
 
 /* ===== HEADER ===== */
 .eet-header {
-    background: linear-gradient(135deg, var(--turquoise) 0%, var(--violet) 100%);
+    background: linear-gradient(135deg, var(--orange-fonce) 0%, var(--orange) 100%);
     color: var(--text-light);
-    padding: 1rem 2rem;
+    padding: 1.5rem 2rem;
     box-shadow: 0 2px 8px var(--shadow);
     z-index: 100;
 }
@@ -72,7 +72,7 @@
 
 .eet-header h1 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: 600;
 }
 
@@ -91,9 +91,9 @@
 }
 
 .btn-export {
-    background: var(--orange);
-    color: var(--text-dark);
-    border: none;
+    background: white;
+    color: var(--orange-fonce);
+    border: 2px solid white;
     padding: 0.6rem 1.5rem;
     border-radius: 6px;
     font-weight: 600;
@@ -104,8 +104,9 @@
 
 .btn-export:hover {
     background: var(--orange-fonce);
+    color: white;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* ===== BARRE DE FILTRES ===== */
