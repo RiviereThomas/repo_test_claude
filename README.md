@@ -49,7 +49,7 @@ Cette application permet de :
 
 ### Prérequis
 
-- Python 3.8+
+- Python 3.13 (ou 3.8+)
 - ODBC Driver 13 ou 17 for SQL Server
 - Accès à la base de données SQL Server (MandarineGestion_Datawarehouse)
 
@@ -61,18 +61,12 @@ git clone <url-du-repo>
 cd repo_test_claude
 ```
 
-2. **Créer un environnement virtuel**
-```bash
-python -m venv venv
-source venv/bin/activate  # Sur Windows: venv\Scripts\activate
-```
-
-3. **Installer les dépendances**
+2. **Installer les dépendances**
 ```bash
 pip install -r requirements.txt
 ```
 
-4. **Vérifier la configuration de la base de données**
+3. **Vérifier la configuration de la base de données**
 
 Ouvrir `backend/dwh_connect.py` et vérifier les paramètres de connexion :
 - Serveur : `SQLDW.mandarine.lan` ou `SQLDW`
@@ -80,21 +74,36 @@ Ouvrir `backend/dwh_connect.py` et vérifier les paramètres de connexion :
 
 ## ▶️ Lancement de l'application
 
-1. **Démarrer le serveur backend**
+### Option 1 : Avec les scripts de démarrage (recommandé)
+
+**Linux/Mac :**
+```bash
+./start.sh
+```
+
+**Windows :**
+```bash
+start.bat
+```
+
+### Option 2 : Lancement manuel
+
+**Démarrer le serveur backend :**
 ```bash
 cd backend
 python main.py
 ```
-Ou via uvicorn :
+
+**Ou via uvicorn :**
 ```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-2. **Accéder à l'application**
+### Accès à l'application
 
 Ouvrir votre navigateur et aller à : `http://localhost:8000`
 
-3. **Documentation de l'API**
+### Documentation de l'API
 
 FastAPI génère automatiquement une documentation interactive :
 - Swagger UI : `http://localhost:8000/docs`
