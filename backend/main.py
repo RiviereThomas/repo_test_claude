@@ -75,8 +75,10 @@ async def get_funds():
     """Récupère la liste de tous les fonds"""
     try:
         engine = dwh_connect.connect_engine()
-        query = "SELECT Mnemo_Fund, Lib_Fund FROM Ref_Funds"
+        query = "SELECT Mnemo_Fund, Lib_Fund FROM Ref_Funds WHERE PTF_Reel = '1'"
         df = dwh_connect.read_sql_dataframe(query, engine)
+        # Remplacer les NaN par None
+        df = df.where(pd.notna(df), None)
         return df.to_dict('records')
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des fonds: {str(e)}")
@@ -88,20 +90,12 @@ async def get_funds_details():
     try:
         engine = dwh_connect.connect_engine()
 
-        # D'abord, essayer avec toutes les colonnes
-        try:
-            query = "SELECT Mnemo_Fund, Lib_Fund, sfdr_cat, Public_Dedie FROM Ref_Funds ORDER BY Mnemo_Fund"
-            df = dwh_connect.read_sql_dataframe(query, engine)
-        except Exception:
-            # Si ça échoue, essayer sans sfdr_cat et Public_Dedie
-            try:
-                query = "SELECT Mnemo_Fund, Lib_Fund FROM Ref_Funds ORDER BY Mnemo_Fund"
-                df = dwh_connect.read_sql_dataframe(query, engine)
-                # Ajouter des colonnes vides
-                df['sfdr_cat'] = None
-                df['Public_Dedie'] = None
-            except Exception as e2:
-                raise Exception(f"Erreur lors de la récupération des fonds: {str(e2)}")
+        # Essayer avec toutes les colonnes et le filtre PTF_Reel
+        query = "SELECT Mnemo_Fund, Lib_Fund, sfdr_cat, Public_Dedie FROM Ref_Funds WHERE PTF_Reel = '1' ORDER BY Mnemo_Fund"
+        df = dwh_connect.read_sql_dataframe(query, engine)
+
+        # Remplacer les NaN par None pour la sérialisation JSON
+        df = df.where(pd.notna(df), None)
 
         return df.to_dict('records')
     except Exception as e:
