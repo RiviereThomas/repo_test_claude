@@ -1,5 +1,5 @@
-// Configuration de l'API
-const API_BASE_URL = 'http://localhost:8000/api';
+// Configuration de l'API - Utilise l'host actuel
+const API_BASE_URL = `${window.location.origin}/api`;
 
 // État de l'application
 const state = {
