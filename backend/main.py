@@ -8,6 +8,9 @@ import pandas as pd
 from sqlalchemy import text
 import dwh_connect
 import eet_calculator
+import json
+import os
+from datetime import datetime
 
 app = FastAPI(title="Regulatory Reports Administration")
 
@@ -42,9 +45,11 @@ class EETField(BaseModel):
 
 
 class ValidationRequest(BaseModel):
-    request_type: str  # 'INSERT', 'UPDATE', 'DELETE'
+    operation_type: str  # 'INSERT', 'UPDATE', 'DELETE'
     table_name: str
-    data: Dict[str, Any]
+    data_json: Dict[str, Any]
+    where_clause_json: Optional[Dict[str, Any]] = None
+    creation_reason: Optional[str] = None
     status: str = 'PENDING'  # 'PENDING', 'APPROVED', 'REJECTED'
 
 
@@ -147,21 +152,32 @@ async def create_validation_request(request: ValidationRequest):
         engine = dwh_connect.connect_engine()
         connection = engine.connect()
 
+        # Récupérer le username depuis l'environnement
+        created_by = os.environ.get('USERNAME', os.environ.get('USER', 'API_USER'))
+
         # Insérer dans tb_validation_requests
         insert_data = {
-            'request_type': request.request_type,
+            'operation_type': request.operation_type,
             'table_name': request.table_name,
-            'data': str(request.data),
-            'status': request.status
+            'data_json': json.dumps(request.data_json),
+            'where_clause_json': json.dumps(request.where_clause_json) if request.where_clause_json else None,
+            'status': request.status,
+            'created_at': datetime.now(),
+            'created_by': created_by,
+            'creation_reason': request.creation_reason,
+            'app': 'admin_reporting'
         }
 
         dwh_connect.insert_into_table(connection, 'tb_validation_requests', insert_data)
 
         return {
             "message": "Demande de validation créée avec succès",
+            "created_by": created_by,
             "request": request.dict()
         }
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la demande: {str(e)}")
 
 

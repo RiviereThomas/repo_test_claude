@@ -266,15 +266,18 @@ async function submitModifications() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    request_type: 'UPDATE',
+                    operation_type: 'UPDATE',
                     table_name: 'tb_eet_fields',
-                    data: {
-                        version: mod.new.version,
-                        field_name: mod.new.field_name,
+                    data_json: {
                         is_fixed_value: mod.new.is_fixed_value,
                         value_source: mod.new.value_source,
                         is_filed_in: mod.new.is_filed_in
                     },
+                    where_clause_json: {
+                        version: mod.new.version,
+                        field_name: mod.new.field_name
+                    },
+                    creation_reason: 'Modification via interface admin_reporting',
                     status: 'PENDING'
                 })
             });
