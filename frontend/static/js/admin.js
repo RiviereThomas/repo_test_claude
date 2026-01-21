@@ -6,7 +6,6 @@ const state = {
     allData: [],
     filteredData: [],
     versions: [],
-    modifications: new Map(), // Map<field_name, {old: {...}, new: {...}}>
     currentEditField: null
 };
 
@@ -24,7 +23,6 @@ function setupEventListeners() {
     const versionFilter = document.getElementById('version-filter');
     const searchField = document.getElementById('search-field');
     const resetBtn = document.getElementById('reset-filters-btn');
-    const saveBtn = document.getElementById('save-btn');
     const closeModal = document.getElementById('close-modal');
     const cancelEdit = document.getElementById('cancel-edit');
     const saveEdit = document.getElementById('save-edit');
@@ -32,7 +30,6 @@ function setupEventListeners() {
     versionFilter.addEventListener('change', loadFields);
     searchField.addEventListener('input', debounce(applyFilters, 300));
     resetBtn.addEventListener('click', resetFilters);
-    saveBtn.addEventListener('click', submitModifications);
     closeModal.addEventListener('click', closeEditModal);
     cancelEdit.addEventListener('click', closeEditModal);
     saveEdit.addEventListener('click', saveFieldEdit);
@@ -86,10 +83,6 @@ async function loadFields() {
         state.allData = data.filter(item => item.is_fixed_value === '1');
         state.filteredData = [...state.allData];
 
-        // Réinitialiser les modifications
-        state.modifications.clear();
-        updateSaveButton();
-
         renderTable();
         updateRowCount();
         showLoading(false);
@@ -131,27 +124,23 @@ function renderTable() {
 
     tbody.innerHTML = '';
     state.filteredData.forEach(item => {
-        const hasModification = state.modifications.has(item.field_name);
-        const modifiedData = hasModification ? state.modifications.get(item.field_name).new : item;
-
         const row = document.createElement('tr');
         row.classList.add('editable-row');
         row.setAttribute('title', 'Cliquer pour soumettre une validation');
         row.setAttribute('data-field', item.field_name);
 
-        if (hasModification) {
-            row.classList.add('modified-row');
-        }
+        // Créer le tooltip pour Valeur Fixe
+        const fixedValueTooltip = item.is_fixed_value === '1'
+            ? 'Valeur Fixe = 1 : Le fichier prendra la valeur brute de la colonne source'
+            : 'Valeur Fixe = 0 : Le fichier prendra la valeur recalculée de la colonne source';
 
         row.innerHTML = `
             <td>${item.version || ''}</td>
             <td class="field-name"><strong>${item.field_name || ''}</strong></td>
-            <td class="centered">${modifiedData.is_fixed_value || ''}</td>
-            <td class="editable-cell" title="${modifiedData.value_source || ''}">${truncateText(modifiedData.value_source || '', 40)}</td>
-            <td class="centered editable-cell">${modifiedData.is_filed_in || ''}</td>
-            <td class="centered" onclick="event.stopPropagation()">
-                ${hasModification ? '<button class="btn-undo" data-field="' + item.field_name + '">↶ Annuler</button>' : ''}
-            </td>
+            <td class="centered" title="${fixedValueTooltip}">${item.is_fixed_value || ''}</td>
+            <td class="editable-cell" title="${item.value_source || ''}">${truncateText(item.value_source || '', 40)}</td>
+            <td class="centered editable-cell">${item.is_filed_in || ''}</td>
+            <td class="centered"></td>
         `;
 
         tbody.appendChild(row);
@@ -164,15 +153,6 @@ function renderTable() {
             openEditModal(fieldName);
         });
     });
-
-    // Ajouter les event listeners sur les boutons Annuler
-    document.querySelectorAll('.btn-undo').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Empêcher le clic de remonter à la ligne
-            const fieldName = e.target.dataset.field;
-            undoModification(fieldName);
-        });
-    });
 }
 
 // Ouvrir le modal d'édition
@@ -180,16 +160,12 @@ function openEditModal(fieldName) {
     const item = state.allData.find(i => i.field_name === fieldName);
     if (!item) return;
 
-    const currentData = state.modifications.has(fieldName)
-        ? state.modifications.get(fieldName).new
-        : item;
-
     state.currentEditField = item;
 
     document.getElementById('modal-field-name').value = item.field_name || '';
-    document.getElementById('modal-is-fixed-value').value = currentData.is_fixed_value || '1';
-    document.getElementById('modal-value-source').value = currentData.value_source || '';
-    document.getElementById('modal-is-filed-in').value = currentData.is_filed_in || '';
+    document.getElementById('modal-is-fixed-value').value = item.is_fixed_value || '1';
+    document.getElementById('modal-value-source').value = item.value_source || '';
+    document.getElementById('modal-is-filed-in').value = item.is_filed_in || '';
 
     document.getElementById('edit-modal').style.display = 'flex';
 }
@@ -201,12 +177,10 @@ function closeEditModal() {
 }
 
 // Sauvegarder les modifications du champ
-function saveFieldEdit() {
+async function saveFieldEdit() {
     if (!state.currentEditField) return;
 
     const newData = {
-        version: state.currentEditField.version,
-        field_name: state.currentEditField.field_name,
         is_fixed_value: document.getElementById('modal-is-fixed-value').value,
         value_source: document.getElementById('modal-value-source').value,
         is_filed_in: document.getElementById('modal-is-filed-in').value
@@ -218,83 +192,37 @@ function saveFieldEdit() {
         newData.value_source !== state.currentEditField.value_source ||
         newData.is_filed_in !== state.currentEditField.is_filed_in;
 
-    if (hasChanged) {
-        state.modifications.set(state.currentEditField.field_name, {
-            old: {...state.currentEditField},
-            new: newData
-        });
-    } else {
-        // Si les modifications sont annulées, retirer de la map
-        state.modifications.delete(state.currentEditField.field_name);
+    if (!hasChanged) {
+        closeEditModal();
+        return;
     }
-
-    updateSaveButton();
-    renderTable();
-    closeEditModal();
-}
-
-// Annuler une modification
-function undoModification(fieldName) {
-    state.modifications.delete(fieldName);
-    updateSaveButton();
-    renderTable();
-}
-
-// Mettre à jour le bouton de sauvegarde
-function updateSaveButton() {
-    const saveBtn = document.getElementById('save-btn');
-    const count = state.modifications.size;
-
-    if (count > 0) {
-        saveBtn.disabled = false;
-        saveBtn.textContent = `💾 Soumettre ${count} modification(s)`;
-    } else {
-        saveBtn.disabled = true;
-        saveBtn.textContent = '💾 Soumettre les modifications';
-    }
-}
-
-// Soumettre les modifications
-async function submitModifications() {
-    if (state.modifications.size === 0) return;
-
-    const modifications = Array.from(state.modifications.values());
 
     try {
         showLoading(true);
 
-        // Soumettre chaque modification comme une demande de validation
-        const promises = modifications.map(mod => {
-            return fetch(`${API_BASE_URL}/validation-requests`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
+        // Soumettre directement la demande de validation
+        const response = await fetch(`${API_BASE_URL}/validation-requests`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                operation_type: 'UPDATE',
+                table_name: 'tb_eet_fields',
+                data_json: newData,
+                where_clause_json: {
+                    version: state.currentEditField.version,
+                    field_name: state.currentEditField.field_name
                 },
-                body: JSON.stringify({
-                    operation_type: 'UPDATE',
-                    table_name: 'tb_eet_fields',
-                    data_json: {
-                        is_fixed_value: mod.new.is_fixed_value,
-                        value_source: mod.new.value_source,
-                        is_filed_in: mod.new.is_filed_in
-                    },
-                    where_clause_json: {
-                        version: mod.new.version,
-                        field_name: mod.new.field_name
-                    },
-                    creation_reason: 'Modification via interface admin_reporting',
-                    status: 'PENDING'
-                })
-            });
+                creation_reason: 'Modification via interface admin_reporting',
+                status: 'PENDING'
+            })
         });
 
-        await Promise.all(promises);
+        if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
 
-        showSuccess(`${modifications.length} demande(s) de validation créée(s) avec succès !`);
-
-        // Réinitialiser les modifications
-        state.modifications.clear();
-        updateSaveButton();
+        showSuccess('Demande de validation créée avec succès !');
+        closeEditModal();
 
         // Recharger les données
         await loadFields();
