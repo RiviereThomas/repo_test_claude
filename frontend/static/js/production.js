@@ -128,11 +128,11 @@ function applyFilters() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase();
 
     state.filteredFunds = state.allFunds.filter(fund => {
-        // Filtre SFDR
-        if (sfdrFilter && fund.sfdr_cat !== sfdrFilter) return false;
+        // Filtre SFDR (comparaison non stricte pour gérer nombre vs string)
+        if (sfdrFilter && String(fund.sfdr_cat) !== String(sfdrFilter)) return false;
 
-        // Filtre Public/Dédié
-        if (publicFilter && fund.Public_Dedie !== publicFilter) return false;
+        // Filtre Public/Dédié (comparaison non stricte)
+        if (publicFilter && String(fund.Public_Dedie) !== String(publicFilter)) return false;
 
         // Recherche textuelle
         if (searchTerm) {
