@@ -87,8 +87,22 @@ async def get_funds_details():
     """Récupère la liste de tous les fonds avec leurs détails (SFDR, Public/Dédié)"""
     try:
         engine = dwh_connect.connect_engine()
-        query = "SELECT Mnemo_Fund, Lib_Fund, sfdr_cat, Public_Dedie FROM Ref_Funds ORDER BY Mnemo_Fund"
-        df = dwh_connect.read_sql_dataframe(query, engine)
+
+        # D'abord, essayer avec toutes les colonnes
+        try:
+            query = "SELECT Mnemo_Fund, Lib_Fund, sfdr_cat, Public_Dedie FROM Ref_Funds ORDER BY Mnemo_Fund"
+            df = dwh_connect.read_sql_dataframe(query, engine)
+        except Exception:
+            # Si ça échoue, essayer sans sfdr_cat et Public_Dedie
+            try:
+                query = "SELECT Mnemo_Fund, Lib_Fund FROM Ref_Funds ORDER BY Mnemo_Fund"
+                df = dwh_connect.read_sql_dataframe(query, engine)
+                # Ajouter des colonnes vides
+                df['sfdr_cat'] = None
+                df['Public_Dedie'] = None
+            except Exception as e2:
+                raise Exception(f"Erreur lors de la récupération des fonds: {str(e2)}")
+
         return df.to_dict('records')
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des fonds: {str(e)}")
