@@ -32,18 +32,6 @@
             </div>
 
             <div class="filter-item">
-                <label>Fonds (pour résultats)</label>
-                <select id="fund-filter">
-                    <option value="">Aucun - Métadonnées seulement</option>
-                </select>
-            </div>
-
-            <div class="filter-item">
-                <label>Date de calcul</label>
-                <input type="date" id="date-filter" value="2024-12-31">
-            </div>
-
-            <div class="filter-item">
                 <label>Valeur Fixe</label>
                 <select id="fixed-value-filter">
                     <option value="">Tous</option>
@@ -65,8 +53,31 @@
             </div>
 
             <div class="filter-actions">
+                <button id="toggle-fund-calc-btn" class="btn-fund-calc">📊 Calcul Fonds</button>
                 <button id="apply-filters-btn" class="btn-apply">Filtrer</button>
                 <button id="reset-filters-btn" class="btn-reset">Réinitialiser</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Calcul Fonds (cachée par défaut) -->
+    <div id="fund-calc-section" class="fund-calc-section" style="display: none;">
+        <div class="fund-calc-content">
+            <h3>📊 Calcul des Résultats par Fonds</h3>
+            <div class="fund-calc-filters">
+                <div class="filter-item">
+                    <label>Fonds</label>
+                    <select id="fund-filter">
+                        <option value="">Sélectionner un fonds...</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label>Date de calcul</label>
+                    <input type="date" id="date-filter" value="2024-12-31">
+                </div>
+
+                <button id="clear-fund-btn" class="btn-clear-fund">✖ Effacer les résultats</button>
             </div>
         </div>
     </div>

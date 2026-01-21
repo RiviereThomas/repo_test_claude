@@ -41,6 +41,8 @@ function setupEventListeners() {
     const filedInFilter = document.getElementById('filed-in-filter');
     const fundFilter = document.getElementById('fund-filter');
     const dateFilter = document.getElementById('date-filter');
+    const toggleFundCalcBtn = document.getElementById('toggle-fund-calc-btn');
+    const clearFundBtn = document.getElementById('clear-fund-btn');
 
     applyFiltersBtn.addEventListener('click', applyFilters);
     resetFiltersBtn.addEventListener('click', resetFilters);
@@ -53,6 +55,10 @@ function setupEventListeners() {
     filedInFilter.addEventListener('change', applyFilters);
     fundFilter.addEventListener('change', handleFundChange);
     dateFilter.addEventListener('change', handleFundChange);
+
+    // Toggle section calcul fonds
+    toggleFundCalcBtn.addEventListener('click', toggleFundCalcSection);
+    clearFundBtn.addEventListener('click', clearFundResults);
 
     // Gestion du tri sur les colonnes
     const headers = document.querySelectorAll('th.sortable');
@@ -175,6 +181,36 @@ async function handleFundChange() {
     }
 
     // Re-render le tableau avec ou sans résultats
+    renderTable();
+}
+
+// Toggle de la section calcul fonds
+function toggleFundCalcSection() {
+    const section = document.getElementById('fund-calc-section');
+    const btn = document.getElementById('toggle-fund-calc-btn');
+
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        btn.textContent = '📊 Masquer Calcul Fonds';
+        btn.classList.add('active');
+    } else {
+        section.style.display = 'none';
+        btn.textContent = '📊 Calcul Fonds';
+        btn.classList.remove('active');
+    }
+}
+
+// Effacer les résultats du fonds
+function clearFundResults() {
+    const fundSelect = document.getElementById('fund-filter');
+    const dateInput = document.getElementById('date-filter');
+
+    fundSelect.value = '';
+    dateInput.value = '2024-12-31';
+
+    state.selectedFund = null;
+    state.fundResults = {};
+
     renderTable();
 }
 

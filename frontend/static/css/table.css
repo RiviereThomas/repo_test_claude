@@ -201,6 +201,73 @@
     background: #a89f9c;
 }
 
+.btn-fund-calc {
+    padding: 0.6rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: var(--orange);
+    color: white;
+}
+
+.btn-fund-calc:hover {
+    background: var(--orange-fonce);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--shadow);
+}
+
+.btn-fund-calc.active {
+    background: var(--orange-fonce);
+    box-shadow: 0 0 0 3px rgba(247, 173, 0, 0.3);
+}
+
+/* ===== SECTION CALCUL FONDS ===== */
+.fund-calc-section {
+    background: var(--bg-tertiary);
+    border-bottom: 2px solid var(--border-color);
+    padding: 1.5rem 2rem;
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+.fund-calc-content {
+    max-width: 100%;
+}
+
+.fund-calc-content h3 {
+    margin: 0 0 1rem 0;
+    color: var(--orange);
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.fund-calc-filters {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.btn-clear-fund {
+    padding: 0.6rem 1.5rem;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: transparent;
+    color: var(--text-primary);
+}
+
+.btn-clear-fund:hover {
+    background: var(--bg-secondary);
+    border-color: var(--orange);
+    color: var(--orange);
+}
+
 /* ===== TABLEAU ===== */
 .table-container {
     flex: 1;
