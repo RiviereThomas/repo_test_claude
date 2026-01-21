@@ -779,6 +779,15 @@
     cursor: not-allowed;
 }
 
+.modal-form-group small {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    display: block;
+    margin-top: 0.4rem;
+    font-style: italic;
+}
+
 .modal-footer {
     padding: 1rem 1.5rem;
     border-top: 1px solid var(--border-light);

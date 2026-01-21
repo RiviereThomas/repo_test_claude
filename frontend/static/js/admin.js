@@ -186,8 +186,8 @@ function openEditModal(fieldName) {
 
     state.currentEditField = item;
 
-    document.getElementById('modal-field-name').value = item.field_name;
-    document.getElementById('modal-is-fixed-value').value = currentData.is_fixed_value || '0';
+    document.getElementById('modal-field-name').value = item.field_name || '';
+    document.getElementById('modal-is-fixed-value').value = currentData.is_fixed_value || '1';
     document.getElementById('modal-value-source').value = currentData.value_source || '';
     document.getElementById('modal-is-filed-in').value = currentData.is_filed_in || '';
 

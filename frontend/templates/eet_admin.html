@@ -16,7 +16,9 @@
             </div>
             <div class="header-right">
                 <span id="row-count" class="row-counter">0 champs</span>
-                <button id="save-btn" class="btn-export" disabled>💾 Soumettre les modifications</button>
+                <button id="save-btn" class="btn-save" style="width: auto; padding: 0.6rem 1.5rem;" disabled>
+                    💾 Soumettre les modifications
+                </button>
             </div>
         </div>
     </header>
@@ -76,33 +78,52 @@
     <div id="edit-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Modifier le champ</h2>
+                <h2>✏️ Modifier le champ</h2>
                 <button class="modal-close" id="close-modal">✕</button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label>Nom du champ</label>
-                    <input type="text" id="modal-field-name" disabled>
+                <div class="modal-form-group">
+                    <label>📝 Nom du champ</label>
+                    <input type="text" id="modal-field-name" readonly>
+                    <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 0.3rem;">
+                        Ce champ ne peut pas être modifié
+                    </small>
                 </div>
-                <div class="form-group">
-                    <label>Valeur Fixe</label>
+
+                <div class="modal-form-group">
+                    <label>🔢 Valeur Fixe (is_fixed_value)</label>
                     <select id="modal-is-fixed-value">
-                        <option value="0">0 (Non)</option>
-                        <option value="1">1 (Oui)</option>
+                        <option value="0">0 - Non (valeur calculée dynamiquement)</option>
+                        <option value="1">1 - Oui (valeur fixe définie)</option>
                     </select>
+                    <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 0.3rem;">
+                        Indique si le champ a une valeur fixe ou calculée
+                    </small>
                 </div>
-                <div class="form-group">
-                    <label>Source (value_source)</label>
-                    <textarea id="modal-value-source" rows="3"></textarea>
+
+                <div class="modal-form-group">
+                    <label>📄 Source de la valeur (value_source)</label>
+                    <textarea id="modal-value-source" rows="5" placeholder="Exemple: Valeur extraite du prospectus, page 5..."></textarea>
+                    <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 0.3rem;">
+                        Description de l'origine ou du calcul de la valeur (ex: prospectus, formule SQL, règle métier...)
+                    </small>
                 </div>
-                <div class="form-group">
-                    <label>Filed In</label>
-                    <input type="text" id="modal-is-filed-in">
+
+                <div class="modal-form-group">
+                    <label>✓ Filed In (is_filed_in)</label>
+                    <select id="modal-is-filed-in">
+                        <option value="">-- Sélectionner --</option>
+                        <option value="0">0 - Non renseigné</option>
+                        <option value="1">1 - Renseigné</option>
+                    </select>
+                    <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 0.3rem;">
+                        Indique si le champ doit être rempli dans le reporting
+                    </small>
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="cancel-edit" class="btn-secondary">Annuler</button>
-                <button id="save-edit" class="btn-primary">Sauvegarder</button>
+                <button id="cancel-edit" class="modal-btn btn-cancel">❌ Annuler</button>
+                <button id="save-edit" class="modal-btn btn-save-modal">✓ Valider</button>
             </div>
         </div>
     </div>
