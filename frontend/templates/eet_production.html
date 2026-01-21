@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production EET</title>
+    <link rel="stylesheet" href="/static/css/production.css">
+</head>
+<body class="production-page">
+    <!-- Header -->
+    <header class="eet-header">
+        <div class="header-content">
+            <div class="header-left">
+                <a href="/" class="back-link">← Retour</a>
+                <h1>🚀 Production EET</h1>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Section Configuration -->
+        <div class="config-section">
+            <h2>Configuration de la Production</h2>
+
+            <div class="config-row">
+                <div class="config-item">
+                    <label>Version EET</label>
+                    <select id="version-select">
+                        <option value="">Chargement...</option>
+                    </select>
+                </div>
+
+                <div class="config-item">
+                    <label>Date de calcul</label>
+                    <input type="date" id="date-input" value="2024-12-31">
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Sélection Fonds -->
+        <div class="funds-section">
+            <h2>Sélection des Fonds</h2>
+
+            <!-- Filtres -->
+            <div class="filters-row">
+                <div class="filter-item">
+                    <label>Catégorie SFDR</label>
+                    <select id="sfdr-filter">
+                        <option value="">Tous</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label>Public/Dédié</label>
+                    <select id="public-filter">
+                        <option value="">Tous</option>
+                    </select>
+                </div>
+
+                <div class="filter-item search-item">
+                    <label>Recherche</label>
+                    <input type="text" id="search-input" placeholder="Rechercher un fonds...">
+                </div>
+
+                <div class="filter-actions">
+                    <button id="select-all-btn" class="btn-secondary">Tout sélectionner</button>
+                    <button id="deselect-all-btn" class="btn-secondary">Tout désélectionner</button>
+                </div>
+            </div>
+
+            <!-- Liste des fonds -->
+            <div class="funds-list-container">
+                <div id="funds-list" class="funds-list">
+                    <p class="loading-text">Chargement des fonds...</p>
+                </div>
+            </div>
+
+            <!-- Compteur -->
+            <div class="selection-counter">
+                <span id="selection-count">0 fonds sélectionné(s)</span>
+            </div>
+        </div>
+
+        <!-- Bouton de génération -->
+        <div class="action-section">
+            <button id="generate-btn" class="btn-generate" disabled>
+                🚀 Générer le fichier EET
+            </button>
+        </div>
+    </main>
+
+    <!-- Loading overlay -->
+    <div id="loading" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">🍊</div>
+        <p>Génération en cours...</p>
+    </div>
+
+    <!-- Error toast -->
+    <div id="error-message" class="error-toast" style="display: none;"></div>
+
+    <!-- Success toast -->
+    <div id="success-message" class="success-toast" style="display: none;"></div>
+
+    <script src="/static/js/production.js"></script>
+</body>
+</html>

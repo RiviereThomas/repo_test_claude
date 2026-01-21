@@ -63,12 +63,31 @@ async def eet_fields_viewer():
         return f.read()
 
 
+@app.get("/eet-production", response_class=HTMLResponse)
+async def eet_production():
+    """Page de production EET"""
+    with open("../frontend/templates/eet_production.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+
 @app.get("/api/funds", response_model=List[Fund])
 async def get_funds():
     """Récupère la liste de tous les fonds"""
     try:
         engine = dwh_connect.connect_engine()
         query = "SELECT Mnemo_Fund, Lib_Fund FROM Ref_Funds"
+        df = dwh_connect.read_sql_dataframe(query, engine)
+        return df.to_dict('records')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des fonds: {str(e)}")
+
+
+@app.get("/api/funds-details")
+async def get_funds_details():
+    """Récupère la liste de tous les fonds avec leurs détails (SFDR, Public/Dédié)"""
+    try:
+        engine = dwh_connect.connect_engine()
+        query = "SELECT Mnemo_Fund, Lib_Fund, sfdr_cat, Public_Dedie FROM Ref_Funds ORDER BY Mnemo_Fund"
         df = dwh_connect.read_sql_dataframe(query, engine)
         return df.to_dict('records')
     except Exception as e:
@@ -160,6 +179,34 @@ async def get_fund_results(fund: str, version: Optional[str] = 'EET_1_1_3', date
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors du calcul des résultats: {str(e)}")
+
+
+class EETGenerationRequest(BaseModel):
+    funds: List[str]
+    version: str
+    date_calcul: str
+
+
+@app.post("/api/generate-eet")
+async def generate_eet(request: EETGenerationRequest):
+    """Génère un fichier Excel EET pour plusieurs fonds"""
+    try:
+        filepath, filename = eet_calculator.generate_eet_excel(
+            request.funds,
+            request.version,
+            request.date_calcul
+        )
+
+        return FileResponse(
+            path=filepath,
+            filename=filename,
+            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la génération du fichier: {str(e)}")
 
 
 @app.get("/health")

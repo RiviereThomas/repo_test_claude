@@ -221,3 +221,59 @@ def calculate_fund_results(fund, version='EET_1_1_3', date_calcul='31/12/2024'):
         import traceback
         traceback.print_exc()
         return {}
+
+
+def generate_eet_excel(funds, version='EET_1_1_3', date_calcul='31/12/2024'):
+    """
+    Génère un fichier Excel avec les résultats EET pour plusieurs fonds
+    Retourne le chemin du fichier généré
+    """
+    import os
+    import tempfile
+
+    try:
+        df_eet = get_eet_fields(version)
+
+        # Calculer les résultats pour tous les fonds
+        df_combined = None
+        df_tmp_combined = None
+
+        for fund in funds:
+            df_final, df_tmp = Calcul_df_final(fund, df_eet.copy(), date_calcul)
+
+            if df_combined is None:
+                df_combined = df_final
+                df_tmp_combined = df_tmp
+            else:
+                # Concaténer horizontalement (ajouter les colonnes du nouveau fonds)
+                df_combined = pd.concat([df_combined, df_final.iloc[:, 1:]], axis=1)
+                df_tmp_combined = pd.concat([df_tmp_combined, df_tmp.iloc[:, df_tmp_combined.shape[1]:]], axis=1)
+
+        # Transposer le dataframe pour avoir les fonds en lignes
+        df_transpose = df_combined.transpose().reset_index(drop=True)
+        df_transpose.columns = df_transpose.iloc[0]
+        df_transpose = df_transpose[1:]
+
+        # Créer le nom du fichier
+        date_str = date_calcul.replace('/', '')
+        if len(funds) == 1:
+            filename = f'EET_{date_str}_{funds[0]}.xlsx'
+        else:
+            filename = f'EET_{date_str}.xlsx'
+
+        # Créer un fichier temporaire
+        temp_dir = tempfile.gettempdir()
+        filepath = os.path.join(temp_dir, filename)
+
+        # Écrire le fichier Excel
+        with pd.ExcelWriter(filepath, engine='xlsxwriter') as writer:
+            df_transpose.to_excel(writer, sheet_name='Data', index=False)
+            df_tmp_combined.to_excel(writer, sheet_name='check', index=False)
+
+        return filepath, filename
+
+    except Exception as e:
+        print(f"Erreur dans generate_eet_excel: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
