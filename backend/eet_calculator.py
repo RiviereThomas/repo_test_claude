@@ -111,6 +111,84 @@ def query_return(query_string, mavar, eet_field=None, override=False, key_fund=N
     return result
 
 
+def Calcul_df_final_all_parts(fund, EET_version, date_calcul='31/12/2024'):
+    """
+    Calcule le dataframe final avec les résultats pour toutes les parts d'un fonds
+    Retourne df_calcul avec toutes les colonnes de parts, et df_tmp
+    """
+    df_calcul = EET_version.copy()
+    cnxn = dc.connect_dwh()
+
+    # Récupération des infos du fonds
+    keyfund = get_datafunds(fund, 'Key_Fund')
+    lib_fund = get_datafunds(fund, 'Lib_Fund')
+    lib_fund_str = lib_fund.replace(' ', '-').lower()
+
+    # Récupérer toutes les parts actives
+    liste_part = get_active_part(fund)
+    if not liste_part:
+        # Si aucune part, on utilise le fonds lui-même
+        liste_part = [fund]
+
+    # Ajouter une colonne pour chaque part
+    col_dep = df_calcul.shape[1]
+
+    for part in liste_part:
+        df_calcul.insert(df_calcul.shape[1], part, [None] * len(df_calcul))
+
+    col_fin = df_calcul.shape[1]
+
+    # Calculer pour chaque part
+    for column in liste_part:
+        # Gestion des valeurs fixes
+        fixed_value_rows = df_calcul['is_fixed_value'] == '1'
+        df_calcul.loc[fixed_value_rows, column] = df_calcul.loc[fixed_value_rows, 'value_source']
+
+        # Gestion des dates
+        date_now_rows = df_calcul['value_source'] == 'Date(now)'
+        df_calcul.loc[date_now_rows, column] = dt.date.today()
+
+        date_calcul_rows = df_calcul['value_source'] == 'Date(calcul)'
+        df_calcul.loc[date_calcul_rows, column] = date_calcul
+
+        # Calculs pour la colonne
+        # Ref_funds
+        df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE ref_funds;', na=False), column] = \
+            df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE ref_funds;', na=False)].apply(
+                lambda row: query_return(row['value_source'], [fund], connect=cnxn), axis=1)
+
+        df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE ref_funds_p', na=False), column] = \
+            df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE ref_funds_p', na=False)].apply(
+                lambda row: query_return(row['value_source'], [column], connect=cnxn), axis=1)
+
+        # tb_eet_data
+        df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE tb_eet_data;', na=False), column] = \
+            df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE tb_eet_data;', na=False)].apply(
+                lambda row: query_return(row['value_source'], [keyfund, row['field_name']], connect=cnxn), axis=1)
+
+        # URLs https
+        df_calcul.loc[df_calcul['value_source'].str.startswith('https://', na=False), column] = \
+            df_calcul.loc[df_calcul['value_source'].str.startswith('https://', na=False)].apply(
+                lambda row: row['value_source'].replace('[mavar]', lib_fund_str), axis=1)
+
+        # Tb_ESG_Histo_Ptf
+        df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE Tb_ESG_Histo_Ptf', na=False), column] = \
+            df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE Tb_ESG_Histo_Ptf', na=False)].apply(
+                lambda row: query_return(row['value_source'], [fund, date_calcul],
+                                       eet_field=row['field_name'], override=True,
+                                       key_fund=keyfund, connect=cnxn), axis=1)
+
+        # tb_esg_calculs_indicateurs
+        df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE tb_esg_calculs_indicateurs', na=False), column] = \
+            df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE tb_esg_calculs_indicateurs', na=False)].apply(
+                lambda row: query_return(row['value_source'], [fund, date_calcul],
+                                       eet_field=row['field_name'], connect=cnxn), axis=1)
+
+    df_tmp = df_calcul
+    df_calcul = df_calcul[['field_name'] + list(df_calcul.columns[col_dep:col_fin])]
+    return df_calcul, df_tmp
+
+
 def Calcul_df_final(fund, EET_version, date_calcul='31/12/2024'):
     """Calcule le dataframe final avec les résultats pour un seul fonds (première part uniquement)"""
     df_calcul = EET_version.copy()
@@ -225,7 +303,7 @@ def calculate_fund_results(fund, version='EET_1_1_3', date_calcul='31/12/2024'):
 
 def generate_eet_excel(funds, version='EET_1_1_3', date_calcul='31/12/2024'):
     """
-    Génère un fichier Excel avec les résultats EET pour plusieurs fonds
+    Génère un fichier Excel avec les résultats EET pour plusieurs fonds (toutes les parts)
     Retourne le chemin du fichier généré
     """
     import os
@@ -234,12 +312,13 @@ def generate_eet_excel(funds, version='EET_1_1_3', date_calcul='31/12/2024'):
     try:
         df_eet = get_eet_fields(version)
 
-        # Calculer les résultats pour tous les fonds
+        # Calculer les résultats pour tous les fonds avec toutes leurs parts
         df_combined = None
         df_tmp_combined = None
 
         for fund in funds:
-            df_final, df_tmp = Calcul_df_final(fund, df_eet.copy(), date_calcul)
+            # Utiliser Calcul_df_final_all_parts pour obtenir toutes les parts
+            df_final, df_tmp = Calcul_df_final_all_parts(fund, df_eet.copy(), date_calcul)
 
             if df_combined is None:
                 df_combined = df_final
@@ -249,7 +328,7 @@ def generate_eet_excel(funds, version='EET_1_1_3', date_calcul='31/12/2024'):
                 df_combined = pd.concat([df_combined, df_final.iloc[:, 1:]], axis=1)
                 df_tmp_combined = pd.concat([df_tmp_combined, df_tmp.iloc[:, df_tmp_combined.shape[1]:]], axis=1)
 
-        # Transposer le dataframe pour avoir les fonds en lignes
+        # Transposer le dataframe pour avoir les parts en lignes
         df_transpose = df_combined.transpose().reset_index(drop=True)
         df_transpose.columns = df_transpose.iloc[0]
         df_transpose = df_transpose[1:]
