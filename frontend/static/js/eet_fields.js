@@ -40,6 +40,7 @@ function setupEventListeners() {
     const fixedValueFilter = document.getElementById('fixed-value-filter');
     const filedInFilter = document.getElementById('filed-in-filter');
     const fundFilter = document.getElementById('fund-filter');
+    const dateFilter = document.getElementById('date-filter');
 
     applyFiltersBtn.addEventListener('click', applyFilters);
     resetFiltersBtn.addEventListener('click', resetFilters);
@@ -51,6 +52,7 @@ function setupEventListeners() {
     fixedValueFilter.addEventListener('change', applyFilters);
     filedInFilter.addEventListener('change', applyFilters);
     fundFilter.addEventListener('change', handleFundChange);
+    dateFilter.addEventListener('change', handleFundChange);
 
     // Gestion du tri sur les colonnes
     const headers = document.querySelectorAll('th.sortable');
@@ -181,7 +183,12 @@ async function loadFundResults(fund) {
     try {
         showLoading(true);
         const versionFilter = document.getElementById('version-filter').value || 'EET_1_1_3';
-        const response = await fetch(`${API_BASE_URL}/fund-results/${fund}?version=${versionFilter}`);
+        const dateFilter = document.getElementById('date-filter').value;
+
+        // Convertir la date du format ISO (YYYY-MM-DD) au format DD/MM/YYYY
+        const dateCalcul = convertISOtoFrenchDate(dateFilter);
+
+        const response = await fetch(`${API_BASE_URL}/fund-results/${fund}?version=${versionFilter}&date_calcul=${encodeURIComponent(dateCalcul)}`);
 
         if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
 
@@ -193,6 +200,13 @@ async function loadFundResults(fund) {
         state.fundResults = {};
         showLoading(false);
     }
+}
+
+// Convertir une date ISO (YYYY-MM-DD) en format français (DD/MM/YYYY)
+function convertISOtoFrenchDate(isoDate) {
+    if (!isoDate) return '31/12/2024';
+    const [year, month, day] = isoDate.split('-');
+    return `${day}/${month}/${year}`;
 }
 
 // Application des filtres
