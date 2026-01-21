@@ -96,10 +96,10 @@ async def get_eet_fields(version: Optional[str] = None):
 
 @app.get("/api/eet-versions")
 async def get_eet_versions():
-    """Récupère la liste des versions disponibles dans tb_eet_fields"""
+    """Récupère la liste des versions disponibles dans tb_eet_fields (triées par ordre décroissant)"""
     try:
         engine = dwh_connect.connect_engine()
-        query = "SELECT DISTINCT version FROM tb_eet_fields ORDER BY version"
+        query = "SELECT DISTINCT version FROM tb_eet_fields ORDER BY version DESC"
         df = dwh_connect.read_sql_dataframe(query, engine)
         return {"versions": df['version'].tolist()}
     except Exception as e:

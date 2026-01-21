@@ -91,9 +91,9 @@ function populateVersionsFilter() {
         select.appendChild(option);
     });
 
-    // Sélectionner EET_1_1_3 par défaut si disponible
-    if (state.versions.includes('EET_1_1_3')) {
-        select.value = 'EET_1_1_3';
+    // Sélectionner la première version (la plus récente) par défaut
+    if (state.versions.length > 0) {
+        select.value = state.versions[0];
     }
 }
 
