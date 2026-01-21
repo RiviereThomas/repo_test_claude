@@ -135,6 +135,10 @@ function renderTable() {
         const modifiedData = hasModification ? state.modifications.get(item.field_name).new : item;
 
         const row = document.createElement('tr');
+        row.classList.add('editable-row');
+        row.setAttribute('title', 'Cliquer pour soumettre une validation');
+        row.setAttribute('data-field', item.field_name);
+
         if (hasModification) {
             row.classList.add('modified-row');
         }
@@ -145,8 +149,7 @@ function renderTable() {
             <td class="centered">${modifiedData.is_fixed_value || ''}</td>
             <td class="editable-cell" title="${modifiedData.value_source || ''}">${truncateText(modifiedData.value_source || '', 40)}</td>
             <td class="centered editable-cell">${modifiedData.is_filed_in || ''}</td>
-            <td class="centered">
-                <button class="btn-edit" data-field="${item.field_name}">✏️ Modifier</button>
+            <td class="centered" onclick="event.stopPropagation()">
                 ${hasModification ? '<button class="btn-undo" data-field="' + item.field_name + '">↶ Annuler</button>' : ''}
             </td>
         `;
@@ -154,16 +157,18 @@ function renderTable() {
         tbody.appendChild(row);
     });
 
-    // Ajouter les event listeners
-    document.querySelectorAll('.btn-edit').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const fieldName = e.target.dataset.field;
+    // Ajouter les event listeners sur les lignes
+    document.querySelectorAll('.editable-row').forEach(row => {
+        row.addEventListener('click', (e) => {
+            const fieldName = row.dataset.field;
             openEditModal(fieldName);
         });
     });
 
+    // Ajouter les event listeners sur les boutons Annuler
     document.querySelectorAll('.btn-undo').forEach(btn => {
         btn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Empêcher le clic de remonter à la ligne
             const fieldName = e.target.dataset.field;
             undoModification(fieldName);
         });
