@@ -70,6 +70,13 @@ async def eet_production():
         return f.read()
 
 
+@app.get("/eet-admin", response_class=HTMLResponse)
+async def eet_admin():
+    """Page d'administration EET"""
+    with open("../frontend/templates/eet_admin.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+
 @app.get("/api/funds", response_model=List[Fund])
 async def get_funds():
     """Récupère la liste de tous les fonds"""

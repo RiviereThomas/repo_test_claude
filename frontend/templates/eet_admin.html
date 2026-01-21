@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration EET</title>
+    <link rel="stylesheet" href="/static/css/table.css">
+</head>
+<body class="eet-viewer">
+    <!-- Header -->
+    <header class="eet-header">
+        <div class="header-content">
+            <div class="header-left">
+                <a href="/" class="back-link">← Retour</a>
+                <h1>⚙️ Administration EET</h1>
+            </div>
+            <div class="header-right">
+                <span id="row-count" class="row-counter">0 champs</span>
+                <button id="save-btn" class="btn-export" disabled>💾 Soumettre les modifications</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Barre de filtres -->
+    <div class="filters-bar">
+        <div class="filters-content">
+            <div class="filter-item">
+                <label>Version</label>
+                <select id="version-filter">
+                    <option value="">Chargement...</option>
+                </select>
+            </div>
+
+            <div class="filter-item search-item">
+                <label>Recherche</label>
+                <input type="text" id="search-field" placeholder="Nom du champ...">
+            </div>
+
+            <div class="filter-actions">
+                <button id="reset-filters-btn" class="btn-reset">Réinitialiser</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading et erreurs -->
+    <div id="loading" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">🍊</div>
+        <p>Chargement des données...</p>
+    </div>
+
+    <div id="error-message" class="error-toast" style="display: none;"></div>
+    <div id="success-message" class="success-toast" style="display: none;"></div>
+
+    <!-- Tableau des champs éditables -->
+    <div class="table-container">
+        <table id="admin-table" class="data-table">
+            <thead>
+                <tr>
+                    <th class="col-version">Version</th>
+                    <th class="col-field-name">Nom du Champ</th>
+                    <th class="col-fixed">Valeur Fixe</th>
+                    <th class="col-source-edit">Source (éditable)</th>
+                    <th class="col-filed-edit">Filed In (éditable)</th>
+                    <th class="col-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <tr>
+                    <td colspan="6" class="no-data">Sélectionnez une version pour commencer</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal de modification -->
+    <div id="edit-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Modifier le champ</h2>
+                <button class="modal-close" id="close-modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nom du champ</label>
+                    <input type="text" id="modal-field-name" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Valeur Fixe</label>
+                    <select id="modal-is-fixed-value">
+                        <option value="0">0 (Non)</option>
+                        <option value="1">1 (Oui)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Source (value_source)</label>
+                    <textarea id="modal-value-source" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Filed In</label>
+                    <input type="text" id="modal-is-filed-in">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-edit" class="btn-secondary">Annuler</button>
+                <button id="save-edit" class="btn-primary">Sauvegarder</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/admin.js"></script>
+</body>
+</html>
