@@ -576,6 +576,17 @@
     box-shadow: inset 0 0 6px rgba(247, 173, 0, 0.3);
 }
 
+/* Non-editable rows */
+.data-table tbody tr.non-editable-row {
+    cursor: not-allowed;
+    opacity: 0.6;
+    background: #F5F5F5 !important;
+}
+
+.data-table tbody tr.non-editable-row:hover {
+    background: #ECECEC !important;
+}
+
 /* Modified row highlighting */
 .modified-row {
     background: #FFF8DC !important;

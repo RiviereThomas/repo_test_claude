@@ -6,7 +6,8 @@ const state = {
     allData: [],
     filteredData: [],
     versions: [],
-    currentEditField: null
+    currentEditField: null,
+    currentMode: '1' // '1' = valeur fixe, '0' = valeur calculée
 };
 
 // Initialisation
@@ -20,6 +21,7 @@ async function initializeApp() {
 }
 
 function setupEventListeners() {
+    const modeFilter = document.getElementById('mode-filter');
     const versionFilter = document.getElementById('version-filter');
     const searchField = document.getElementById('search-field');
     const resetBtn = document.getElementById('reset-filters-btn');
@@ -27,6 +29,10 @@ function setupEventListeners() {
     const cancelEdit = document.getElementById('cancel-edit');
     const saveEdit = document.getElementById('save-edit');
 
+    modeFilter.addEventListener('change', () => {
+        state.currentMode = modeFilter.value;
+        loadFields();
+    });
     versionFilter.addEventListener('change', loadFields);
     searchField.addEventListener('input', debounce(applyFilters, 300));
     resetBtn.addEventListener('click', resetFilters);
@@ -79,8 +85,8 @@ async function loadFields() {
 
         const data = await response.json();
 
-        // Filtrer seulement les champs avec is_fixed_value = '1'
-        state.allData = data.filter(item => item.is_fixed_value === '1');
+        // Filtrer selon le mode sélectionné
+        state.allData = data.filter(item => item.is_fixed_value === state.currentMode);
         state.filteredData = [...state.allData];
 
         renderTable();
@@ -113,20 +119,68 @@ function resetFilters() {
     updateRowCount();
 }
 
+// Déterminer si un champ est modifiable selon sa source
+function isFieldEditable(item) {
+    if (item.is_fixed_value === '1') {
+        return true; // Toujours modifiable en mode valeur fixe
+    }
+
+    // En mode valeur calculée (0), vérifier la source
+    const source = (item.value_source || '').toLowerCase();
+
+    // Non modifiable si source commence par "table ref_funds" ou "table ref_funds_parts"
+    if (source.startsWith('table ref_funds') || source.startsWith('table ref_funds_parts')) {
+        return false;
+    }
+
+    return true;
+}
+
+// Obtenir le tooltip approprié selon la source
+function getSourceTooltip(item) {
+    if (item.is_fixed_value === '1') {
+        return 'Cliquer pour soumettre une validation';
+    }
+
+    const source = (item.value_source || '').toLowerCase();
+
+    // Non modifiable
+    if (source.startsWith('table ref_funds') || source.startsWith('table ref_funds_parts')) {
+        return 'Passer par l\'IT ou l\'application existante pour modifier les référentiels des fonds';
+    }
+
+    // Modifiable - vérifier le type
+    if (source.startsWith('table tb_eet_data')) {
+        return 'La modification sera appliquée aux portefeuilles sélectionnés - Cliquer pour soumettre une validation';
+    }
+
+    // Autre source modifiable
+    return 'La modification sera appliquée à tous les portefeuilles - Cliquer pour soumettre une validation';
+}
+
 // Rendu du tableau
 function renderTable() {
     const tbody = document.getElementById('table-body');
 
     if (state.filteredData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="no-data">Aucun champ avec valeur fixe trouvé</td></tr>';
+        const modeText = state.currentMode === '1' ? 'valeur fixe' : 'valeur calculée';
+        tbody.innerHTML = `<tr><td colspan="6" class="no-data">Aucun champ avec ${modeText} trouvé</td></tr>`;
         return;
     }
 
     tbody.innerHTML = '';
     state.filteredData.forEach(item => {
         const row = document.createElement('tr');
-        row.classList.add('editable-row');
-        row.setAttribute('title', 'Cliquer pour soumettre une validation');
+        const editable = isFieldEditable(item);
+        const tooltip = getSourceTooltip(item);
+
+        if (editable) {
+            row.classList.add('editable-row');
+        } else {
+            row.classList.add('non-editable-row');
+        }
+
+        row.setAttribute('title', tooltip);
         row.setAttribute('data-field', item.field_name);
 
         // Créer le tooltip pour Valeur Fixe
@@ -140,13 +194,13 @@ function renderTable() {
             <td class="centered" title="${fixedValueTooltip}">${item.is_fixed_value || ''}</td>
             <td class="editable-cell" title="${item.value_source || ''}">${truncateText(item.value_source || '', 40)}</td>
             <td class="centered editable-cell">${item.is_filed_in || ''}</td>
-            <td class="centered"></td>
+            <td class="centered">${editable ? '' : '🔒'}</td>
         `;
 
         tbody.appendChild(row);
     });
 
-    // Ajouter les event listeners sur les lignes
+    // Ajouter les event listeners seulement sur les lignes modifiables
     document.querySelectorAll('.editable-row').forEach(row => {
         row.addEventListener('click', (e) => {
             const fieldName = row.dataset.field;
