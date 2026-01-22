@@ -31,6 +31,7 @@ function setupEventListeners() {
 
     modeFilter.addEventListener('change', () => {
         state.currentMode = modeFilter.value;
+        console.log('Mode changé vers:', state.currentMode);
         loadFields();
     });
     versionFilter.addEventListener('change', loadFields);
@@ -84,6 +85,10 @@ async function loadFields() {
         if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
 
         const data = await response.json();
+
+        console.log('Total données reçues:', data.length);
+        console.log('Mode actuel:', state.currentMode);
+        console.log('Exemple de données:', data.slice(0, 3).map(d => ({field: d.field_name, is_fixed: d.is_fixed_value, type: typeof d.is_fixed_value})));
 
         // Filtrer selon le mode sélectionné - convertir en string pour comparaison
         state.allData = data.filter(item => String(item.is_fixed_value) === String(state.currentMode));
@@ -140,24 +145,34 @@ function isFieldEditable(item) {
 
 // Obtenir le tooltip approprié selon la source
 function getSourceTooltip(item) {
+    // Message de base sur la valeur fixe
+    let baseMessage = '';
     if (String(item.is_fixed_value) === '1') {
-        return 'Cliquer pour soumettre une validation';
+        baseMessage = 'Valeur Fixe = 1 : Le fichier prendra la valeur brute de la colonne source';
+    } else {
+        baseMessage = 'Valeur Fixe = 0 : Le fichier prendra la valeur recalculée de la colonne source';
     }
 
+    // En mode valeur fixe, retourner juste le message de base + action
+    if (String(item.is_fixed_value) === '1') {
+        return baseMessage + ' - Cliquer pour soumettre une validation';
+    }
+
+    // En mode valeur calculée (0), ajouter le contexte selon la source
     const source = (item.value_source || '').toLowerCase();
 
     // Non modifiable
     if (source.startsWith('table ref_funds') || source.startsWith('table ref_funds_parts')) {
-        return 'Passer par l\'IT ou l\'application existante pour modifier les référentiels des fonds';
+        return baseMessage + ' - Passer par l\'IT ou l\'application existante pour modifier les référentiels des fonds';
     }
 
     // Modifiable - vérifier le type
     if (source.startsWith('table tb_eet_data')) {
-        return 'La modification sera appliquée aux portefeuilles sélectionnés - Cliquer pour soumettre une validation';
+        return baseMessage + ' - La modification sera appliquée aux portefeuilles sélectionnés - Cliquer pour soumettre une validation';
     }
 
     // Autre source modifiable
-    return 'La modification sera appliquée à tous les portefeuilles - Cliquer pour soumettre une validation';
+    return baseMessage + ' - La modification sera appliquée à tous les portefeuilles - Cliquer pour soumettre une validation';
 }
 
 // Rendu du tableau
