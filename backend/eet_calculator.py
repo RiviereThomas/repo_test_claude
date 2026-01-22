@@ -71,7 +71,7 @@ def query_return(query_string, mavar, eet_field=None, override=False, key_fund=N
             dflt = part.replace('DFLT ', '').strip()
             dflt_match = re.search(r'\[(\d+)\]', dflt)
             dflt = int(dflt_match.group(1)) if dflt_match else ''
-        elif part.startswith('INV '):
+        elif part.startswith(' INV '):
             inverse = True
 
     # Construire la requête SQL
@@ -93,7 +93,7 @@ def query_return(query_string, mavar, eet_field=None, override=False, key_fund=N
             else:
                 result = df.iloc[0, 0]
         if inverse:
-            result = 1 - result
+            result = 1 - float(result)
     else:
         result = ''
         if dflt != '':
@@ -102,8 +102,9 @@ def query_return(query_string, mavar, eet_field=None, override=False, key_fund=N
     # Gestion des overrides
     if override and eet_field is not None:
         sql_query = f"""select top 1 eet_value from tb_eet_override
-                        where eet_field ='{eet_field}' and ref_fund_id= '{key_fund}'
+                        where eet_field ='{eet_field}' and ref_fund_id= '{key_fund}' and date_data ='{mavar[1]}'
                         order by id desc """
+
         df_override = pd.read_sql(sql_query, connect)
         if df_override.shape[0] == 1:
             result = df_override.iloc[0, 0]
@@ -206,7 +207,6 @@ def Calcul_df_final(fund, EET_version, date_calcul='31/12/2024'):
         first_part = fund
     else:
         first_part = liste_part[0]
-
     # Ajouter une seule colonne pour la première part
     col_dep = df_calcul.shape[1]
     df_calcul.insert(df_calcul.shape[1], first_part, [None] * len(df_calcul))
@@ -249,14 +249,14 @@ def Calcul_df_final(fund, EET_version, date_calcul='31/12/2024'):
     df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE Tb_ESG_Histo_Ptf', na=False), column] = \
         df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE Tb_ESG_Histo_Ptf', na=False)].apply(
             lambda row: query_return(row['value_source'], [fund, date_calcul],
-                                   eet_field=row['field_name'], override=True,
-                                   key_fund=keyfund, connect=cnxn), axis=1)
+                                     eet_field=row['field_name'], override=True,
+                                     key_fund=keyfund, connect=cnxn), axis=1)
 
     # tb_esg_calculs_indicateurs
     df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE tb_esg_calculs_indicateurs', na=False), column] = \
         df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE tb_esg_calculs_indicateurs', na=False)].apply(
             lambda row: query_return(row['value_source'], [fund, date_calcul],
-                                   eet_field=row['field_name'], connect=cnxn), axis=1)
+                                     eet_field=row['field_name'], connect=cnxn), axis=1)
 
     df_tmp = df_calcul
     df_calcul = df_calcul[['field_name'] + list(df_calcul.columns[col_dep:col_fin])]
@@ -271,7 +271,6 @@ def calculate_fund_results(fund, version='EET_1_1_3', date_calcul='31/12/2024'):
     try:
         df_eet = get_eet_fields(version)
         df_final, df_tmp = Calcul_df_final(fund, df_eet, date_calcul)  # Plus de liste, un seul fonds
-
         # Créer un dictionnaire field_name -> résultat
         # On prend la première colonne de résultat (après field_name)
         results = {}
@@ -280,7 +279,6 @@ def calculate_fund_results(fund, version='EET_1_1_3', date_calcul='31/12/2024'):
             for idx, row in df_final.iterrows():
                 field_name = row['field_name']
                 result_value = row[result_column]
-
                 # Convertir en type JSON-serializable
                 if pd.notna(result_value):
                     # Convertir datetime/date en string

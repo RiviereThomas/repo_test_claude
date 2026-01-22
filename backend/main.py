@@ -103,7 +103,7 @@ async def get_funds_details():
         engine = dwh_connect.connect_engine()
 
         # Essayer avec toutes les colonnes et le filtre PTF_Reel
-        query = "SELECT Mnemo_Fund, Lib_Fund, sfdr_cat, Public_Dedie FROM Ref_Funds WHERE PTF_Reel = '1' ORDER BY Mnemo_Fund"
+        query = "SELECT Mnemo_Fund, Lib_Fund, sfdr_cat, Public_Dedie FROM Ref_Funds WHERE PTF_Reel = '1' and sfdr_cat is not null  ORDER BY Mnemo_Fund"
         df = dwh_connect.read_sql_dataframe(query, engine)
 
         # Remplacer les NaN par None pour la sérialisation JSON
@@ -202,12 +202,7 @@ async def get_fund_results(fund: str, version: Optional[str] = 'EET_1_1_3', date
     """Calcule et retourne les résultats EET pour un fonds donné"""
     try:
         results = eet_calculator.calculate_fund_results(fund, version, date_calcul)
-        return {
-            "fund": fund,
-            "version": version,
-            "date_calcul": date_calcul,
-            "results": results
-        }
+        return {"fund": fund,"version": version,"date_calcul": date_calcul,"results": results }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors du calcul des résultats: {str(e)}")
 
