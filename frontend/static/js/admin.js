@@ -9,7 +9,9 @@ const state = {
     currentEditField: null,
     currentMode: '', // '' = tous, '1' = valeur fixe, '0' = valeur calculée
     fundResults: null, // Résultats du calcul de fonds
-    fundCalcVisible: false
+    fundCalcVisible: false,
+    sortColumn: null,
+    sortOrder: 'asc' // 'asc' ou 'desc'
 };
 
 // Initialisation
@@ -21,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initializeApp() {
     await loadVersions();
     await loadFunds();
+    setupSortListeners();
 }
 
 function setupEventListeners() {
@@ -234,6 +237,60 @@ function resetFilters() {
     updateRowCount();
 }
 
+// Configuration des listeners de tri
+function setupSortListeners() {
+    document.querySelectorAll('.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const column = th.dataset.column;
+            sortData(column);
+        });
+    });
+}
+
+// Tri des données
+function sortData(column) {
+    // Si on clique sur la même colonne, inverser l'ordre
+    if (state.sortColumn === column) {
+        state.sortOrder = state.sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+        state.sortColumn = column;
+        state.sortOrder = 'asc';
+    }
+
+    // Trier les données
+    state.filteredData.sort((a, b) => {
+        let valueA = a[column] || '';
+        let valueB = b[column] || '';
+
+        // Convertir en minuscules pour tri insensible à la casse
+        if (typeof valueA === 'string') valueA = valueA.toLowerCase();
+        if (typeof valueB === 'string') valueB = valueB.toLowerCase();
+
+        if (valueA < valueB) return state.sortOrder === 'asc' ? -1 : 1;
+        if (valueA > valueB) return state.sortOrder === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    // Mettre à jour l'affichage des icônes de tri
+    updateSortIcons();
+    renderTable();
+}
+
+// Mise à jour des icônes de tri
+function updateSortIcons() {
+    document.querySelectorAll('.sortable').forEach(th => {
+        const icon = th.querySelector('.sort-icon');
+        th.classList.remove('sorted');
+
+        if (th.dataset.column === state.sortColumn) {
+            th.classList.add('sorted');
+            icon.textContent = state.sortOrder === 'asc' ? '▲' : '▼';
+        } else {
+            icon.textContent = '';
+        }
+    });
+}
+
 // Déterminer si un champ est modifiable selon sa source
 function isFieldEditable(item) {
     if (String(item.is_fixed_value) === '1') {
@@ -346,6 +403,9 @@ function renderTable() {
             openEditModal(fieldName);
         });
     });
+
+    // Mettre à jour les icônes de tri
+    updateSortIcons();
 }
 
 // Ouvrir le modal d'édition

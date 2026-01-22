@@ -90,11 +90,36 @@
         <table id="admin-table" class="data-table">
             <thead>
                 <tr>
-                    <th class="col-version">Version</th>
-                    <th class="col-field-name">Nom du Champ</th>
-                    <th class="col-fixed">Valeur Fixe</th>
-                    <th class="col-source-edit">Source (éditable)</th>
-                    <th class="col-filed-edit">Filed In (éditable)</th>
+                    <th class="col-version sortable" data-column="version">
+                        <div class="th-content">
+                            <span>Version</span>
+                            <span class="sort-icon"></span>
+                        </div>
+                    </th>
+                    <th class="col-field-name sortable" data-column="field_name">
+                        <div class="th-content">
+                            <span>Nom du Champ</span>
+                            <span class="sort-icon"></span>
+                        </div>
+                    </th>
+                    <th class="col-fixed sortable" data-column="is_fixed_value">
+                        <div class="th-content">
+                            <span>Valeur Fixe</span>
+                            <span class="sort-icon"></span>
+                        </div>
+                    </th>
+                    <th class="col-source-edit sortable" data-column="value_source">
+                        <div class="th-content">
+                            <span>Source (éditable)</span>
+                            <span class="sort-icon"></span>
+                        </div>
+                    </th>
+                    <th class="col-filed-edit sortable" data-column="is_filed_in">
+                        <div class="th-content">
+                            <span>Filed In (éditable)</span>
+                            <span class="sort-icon"></span>
+                        </div>
+                    </th>
                     <th id="result-column-header" class="col-result" style="display: none;">Résultat</th>
                     <th class="col-actions">Actions</th>
                 </tr>
