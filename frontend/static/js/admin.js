@@ -7,7 +7,7 @@ const state = {
     filteredData: [],
     versions: [],
     currentEditField: null,
-    currentMode: '1' // '1' = valeur fixe, '0' = valeur calculée
+    currentMode: '' // '' = tous, '1' = valeur fixe, '0' = valeur calculée
 };
 
 // Initialisation
@@ -90,11 +90,17 @@ async function loadFields() {
         console.log('Mode actuel:', state.currentMode);
         console.log('Exemple de données:', data.slice(0, 3).map(d => ({field: d.field_name, is_fixed: d.is_fixed_value, type: typeof d.is_fixed_value})));
 
-        // Filtrer selon le mode sélectionné - convertir en string pour comparaison
-        state.allData = data.filter(item => String(item.is_fixed_value) === String(state.currentMode));
+        // Filtrer selon le mode sélectionné
+        if (state.currentMode === '') {
+            // Mode "Tous" - afficher tous les champs
+            state.allData = data;
+        } else {
+            // Filtrer selon le mode - convertir en string pour comparaison
+            state.allData = data.filter(item => String(item.is_fixed_value) === String(state.currentMode));
+        }
         state.filteredData = [...state.allData];
 
-        console.log(`Mode: ${state.currentMode}, Champs trouvés: ${state.allData.length}`);
+        console.log(`Mode: ${state.currentMode || 'Tous'}, Champs trouvés: ${state.allData.length}`);
 
         renderTable();
         updateRowCount();
@@ -180,8 +186,14 @@ function renderTable() {
     const tbody = document.getElementById('table-body');
 
     if (state.filteredData.length === 0) {
-        const modeText = state.currentMode === '1' ? 'valeur fixe' : 'valeur calculée';
-        tbody.innerHTML = `<tr><td colspan="6" class="no-data">Aucun champ avec ${modeText} trouvé</td></tr>`;
+        let modeText = 'valeur fixe';
+        if (state.currentMode === '0') modeText = 'valeur calculée';
+        else if (state.currentMode === '') modeText = '';
+
+        const message = state.currentMode === ''
+            ? 'Aucun champ trouvé'
+            : `Aucun champ avec ${modeText} trouvé`;
+        tbody.innerHTML = `<tr><td colspan="6" class="no-data">${message}</td></tr>`;
         return;
     }
 
