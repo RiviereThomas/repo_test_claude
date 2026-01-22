@@ -29,9 +29,13 @@ function setupEventListeners() {
     const cancelEdit = document.getElementById('cancel-edit');
     const saveEdit = document.getElementById('save-edit');
 
+    // Synchroniser le select avec state.currentMode au démarrage
+    modeFilter.value = state.currentMode;
+    console.log('Mode initial:', state.currentMode);
+
     modeFilter.addEventListener('change', () => {
         state.currentMode = modeFilter.value;
-        console.log('Mode changé vers:', state.currentMode);
+        console.log('Mode changé vers:', state.currentMode || 'Tous');
         loadFields();
     });
     versionFilter.addEventListener('change', loadFields);
@@ -86,21 +90,26 @@ async function loadFields() {
 
         const data = await response.json();
 
+        console.log('=== DEBUG LOAD FIELDS ===');
         console.log('Total données reçues:', data.length);
-        console.log('Mode actuel:', state.currentMode);
+        console.log('Mode actuel (type:', typeof state.currentMode, '):', state.currentMode);
+        console.log('Mode vide?', state.currentMode === '');
         console.log('Exemple de données:', data.slice(0, 3).map(d => ({field: d.field_name, is_fixed: d.is_fixed_value, type: typeof d.is_fixed_value})));
 
         // Filtrer selon le mode sélectionné
         if (state.currentMode === '') {
             // Mode "Tous" - afficher tous les champs
+            console.log('Mode TOUS - Affichage de tous les champs');
             state.allData = data;
         } else {
             // Filtrer selon le mode - convertir en string pour comparaison
+            console.log('Filtrage par mode:', state.currentMode);
             state.allData = data.filter(item => String(item.is_fixed_value) === String(state.currentMode));
         }
         state.filteredData = [...state.allData];
 
         console.log(`Mode: ${state.currentMode || 'Tous'}, Champs trouvés: ${state.allData.length}`);
+        console.log('======================');
 
         renderTable();
         updateRowCount();
@@ -216,7 +225,7 @@ function renderTable() {
             <td>${item.version || ''}</td>
             <td class="field-name"><strong>${item.field_name || ''}</strong></td>
             <td class="centered">${item.is_fixed_value || ''}</td>
-            <td class="editable-cell" title="${item.value_source || ''}">${truncateText(item.value_source || '', 40)}</td>
+            <td class="editable-cell">${truncateText(item.value_source || '', 40)}</td>
             <td class="centered editable-cell">${item.is_filed_in || ''}</td>
             <td class="centered">${editable ? '' : '🔒'}</td>
         `;
