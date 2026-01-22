@@ -46,6 +46,32 @@
 
             <div class="filter-actions">
                 <button id="reset-filters-btn" class="btn-reset">Réinitialiser</button>
+                <button id="fund-calc-toggle-btn" class="btn-fund-calc">📊 Calcul Fonds</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Calcul Fonds (collapsible) -->
+    <div id="fund-calc-section" class="fund-calc-section" style="display: none;">
+        <div class="fund-calc-content">
+            <h3>Calcul des résultats pour un fonds</h3>
+            <div class="fund-calc-filters">
+                <div class="filter-item">
+                    <label>Fonds</label>
+                    <select id="fund-select">
+                        <option value="">Sélectionner un fonds...</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label>Date de calcul</label>
+                    <input type="date" id="calc-date" value="2024-12-31">
+                </div>
+
+                <div class="filter-actions">
+                    <button id="calculate-fund-btn" class="btn-apply">Calculer</button>
+                    <button id="clear-fund-btn" class="btn-clear-fund">Effacer</button>
+                </div>
             </div>
         </div>
     </div>
@@ -69,6 +95,7 @@
                     <th class="col-fixed">Valeur Fixe</th>
                     <th class="col-source-edit">Source (éditable)</th>
                     <th class="col-filed-edit">Filed In (éditable)</th>
+                    <th id="result-column-header" class="col-result" style="display: none;">Résultat</th>
                     <th class="col-actions">Actions</th>
                 </tr>
             </thead>

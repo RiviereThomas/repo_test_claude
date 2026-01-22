@@ -7,7 +7,9 @@ const state = {
     filteredData: [],
     versions: [],
     currentEditField: null,
-    currentMode: '' // '' = tous, '1' = valeur fixe, '0' = valeur calculée
+    currentMode: '', // '' = tous, '1' = valeur fixe, '0' = valeur calculée
+    fundResults: null, // Résultats du calcul de fonds
+    fundCalcVisible: false
 };
 
 // Initialisation
@@ -18,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function initializeApp() {
     await loadVersions();
+    await loadFunds();
 }
 
 function setupEventListeners() {
@@ -25,6 +28,9 @@ function setupEventListeners() {
     const versionFilter = document.getElementById('version-filter');
     const searchField = document.getElementById('search-field');
     const resetBtn = document.getElementById('reset-filters-btn');
+    const fundCalcToggleBtn = document.getElementById('fund-calc-toggle-btn');
+    const calculateFundBtn = document.getElementById('calculate-fund-btn');
+    const clearFundBtn = document.getElementById('clear-fund-btn');
     const closeModal = document.getElementById('close-modal');
     const cancelEdit = document.getElementById('cancel-edit');
     const saveEdit = document.getElementById('save-edit');
@@ -41,6 +47,9 @@ function setupEventListeners() {
     versionFilter.addEventListener('change', loadFields);
     searchField.addEventListener('input', debounce(applyFilters, 300));
     resetBtn.addEventListener('click', resetFilters);
+    fundCalcToggleBtn.addEventListener('click', toggleFundCalcSection);
+    calculateFundBtn.addEventListener('click', calculateFundResults);
+    clearFundBtn.addEventListener('click', clearFundResults);
     closeModal.addEventListener('click', closeEditModal);
     cancelEdit.addEventListener('click', closeEditModal);
     saveEdit.addEventListener('click', saveFieldEdit);
@@ -76,6 +85,90 @@ function populateVersionsFilter() {
         select.value = state.versions[0];
         loadFields();
     }
+}
+
+// Chargement des fonds
+async function loadFunds() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/funds`);
+        if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+
+        const funds = await response.json();
+        const select = document.getElementById('fund-select');
+        select.innerHTML = '<option value="">Sélectionner un fonds...</option>';
+
+        funds.forEach(fund => {
+            const option = document.createElement('option');
+            option.value = fund.Mnemo_Fund;
+            option.textContent = `${fund.Mnemo_Fund} - ${fund.Lib_Fund}`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        showError(`Erreur lors du chargement des fonds: ${error.message}`);
+    }
+}
+
+// Toggle la section de calcul fonds
+function toggleFundCalcSection() {
+    const section = document.getElementById('fund-calc-section');
+    const btn = document.getElementById('fund-calc-toggle-btn');
+    state.fundCalcVisible = !state.fundCalcVisible;
+
+    if (state.fundCalcVisible) {
+        section.style.display = 'block';
+        btn.classList.add('active');
+    } else {
+        section.style.display = 'none';
+        btn.classList.remove('active');
+    }
+}
+
+// Calculer les résultats du fonds
+async function calculateFundResults() {
+    const fund = document.getElementById('fund-select').value;
+    const dateInput = document.getElementById('calc-date').value;
+    const version = document.getElementById('version-filter').value;
+
+    if (!fund) {
+        showError('Veuillez sélectionner un fonds');
+        return;
+    }
+
+    if (!version) {
+        showError('Veuillez sélectionner une version');
+        return;
+    }
+
+    // Convertir la date au format français
+    const [year, month, day] = dateInput.split('-');
+    const dateCalcul = `${day}/${month}/${year}`;
+
+    try {
+        showLoading(true);
+        const response = await fetch(`${API_BASE_URL}/fund-results/${fund}?version=${version}&date_calcul=${encodeURIComponent(dateCalcul)}`);
+        if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+
+        const data = await response.json();
+        state.fundResults = data.results;
+
+        // Afficher la colonne résultat
+        document.getElementById('result-column-header').style.display = '';
+
+        renderTable();
+        showLoading(false);
+        showSuccess(`Résultats calculés pour ${fund} au ${dateCalcul}`);
+    } catch (error) {
+        showError(`Erreur lors du calcul: ${error.message}`);
+        showLoading(false);
+    }
+}
+
+// Effacer les résultats du fonds
+function clearFundResults() {
+    state.fundResults = null;
+    document.getElementById('fund-select').value = '';
+    document.getElementById('result-column-header').style.display = 'none';
+    renderTable();
 }
 
 // Chargement des champs selon le mode et la version
@@ -202,7 +295,8 @@ function renderTable() {
         const message = state.currentMode === ''
             ? 'Aucun champ trouvé'
             : `Aucun champ avec ${modeText} trouvé`;
-        tbody.innerHTML = `<tr><td colspan="6" class="no-data">${message}</td></tr>`;
+        const colspan = state.fundResults ? 7 : 6;
+        tbody.innerHTML = `<tr><td colspan="${colspan}" class="no-data">${message}</td></tr>`;
         return;
     }
 
@@ -221,12 +315,24 @@ function renderTable() {
         row.setAttribute('title', tooltip);
         row.setAttribute('data-field', item.field_name);
 
+        // Obtenir le résultat si disponible
+        let resultCell = '';
+        if (state.fundResults) {
+            const result = state.fundResults[item.field_name];
+            if (result !== undefined && result !== null && result !== '') {
+                resultCell = `<td class="result-value">${result}</td>`;
+            } else {
+                resultCell = `<td class="result-empty">-</td>`;
+            }
+        }
+
         row.innerHTML = `
             <td>${item.version || ''}</td>
             <td class="field-name"><strong>${item.field_name || ''}</strong></td>
             <td class="centered">${item.is_fixed_value || ''}</td>
             <td class="editable-cell">${truncateText(item.value_source || '', 40)}</td>
             <td class="centered editable-cell">${item.is_filed_in || ''}</td>
+            ${resultCell}
             <td class="centered">${editable ? '' : '🔒'}</td>
         `;
 
