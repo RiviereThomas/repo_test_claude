@@ -73,7 +73,7 @@ function populateVersionsFilter() {
     }
 }
 
-// Chargement des champs avec is_fixed_value = '1'
+// Chargement des champs selon le mode et la version
 async function loadFields() {
     const version = document.getElementById('version-filter').value;
     if (!version) return;
@@ -85,9 +85,11 @@ async function loadFields() {
 
         const data = await response.json();
 
-        // Filtrer selon le mode sélectionné
-        state.allData = data.filter(item => item.is_fixed_value === state.currentMode);
+        // Filtrer selon le mode sélectionné - convertir en string pour comparaison
+        state.allData = data.filter(item => String(item.is_fixed_value) === String(state.currentMode));
         state.filteredData = [...state.allData];
+
+        console.log(`Mode: ${state.currentMode}, Champs trouvés: ${state.allData.length}`);
 
         renderTable();
         updateRowCount();
@@ -121,7 +123,7 @@ function resetFilters() {
 
 // Déterminer si un champ est modifiable selon sa source
 function isFieldEditable(item) {
-    if (item.is_fixed_value === '1') {
+    if (String(item.is_fixed_value) === '1') {
         return true; // Toujours modifiable en mode valeur fixe
     }
 
@@ -138,7 +140,7 @@ function isFieldEditable(item) {
 
 // Obtenir le tooltip approprié selon la source
 function getSourceTooltip(item) {
-    if (item.is_fixed_value === '1') {
+    if (String(item.is_fixed_value) === '1') {
         return 'Cliquer pour soumettre une validation';
     }
 
@@ -183,15 +185,10 @@ function renderTable() {
         row.setAttribute('title', tooltip);
         row.setAttribute('data-field', item.field_name);
 
-        // Créer le tooltip pour Valeur Fixe
-        const fixedValueTooltip = item.is_fixed_value === '1'
-            ? 'Valeur Fixe = 1 : Le fichier prendra la valeur brute de la colonne source'
-            : 'Valeur Fixe = 0 : Le fichier prendra la valeur recalculée de la colonne source';
-
         row.innerHTML = `
             <td>${item.version || ''}</td>
             <td class="field-name"><strong>${item.field_name || ''}</strong></td>
-            <td class="centered" title="${fixedValueTooltip}">${item.is_fixed_value || ''}</td>
+            <td class="centered">${item.is_fixed_value || ''}</td>
             <td class="editable-cell" title="${item.value_source || ''}">${truncateText(item.value_source || '', 40)}</td>
             <td class="centered editable-cell">${item.is_filed_in || ''}</td>
             <td class="centered">${editable ? '' : '🔒'}</td>
