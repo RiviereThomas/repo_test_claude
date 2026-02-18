@@ -275,19 +275,37 @@ async def run_production(module: str):
         if not os.path.exists(script_path):
             raise HTTPException(status_code=404, detail=f"Script {scripts[module]} introuvable")
 
-        # Lancer le script en arrière-plan
-        process = subprocess.Popen(
-            ['python', script_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            cwd=os.path.dirname(script_path)
-        )
+        # Lancer le script et attendre la fin de l'exécution
+        try:
+            # Pour TPT, passer automatiquement "oui" à l'input
+            stdin_input = "oui\n" if module == 'tpt' else None
 
-        return {
-            "message": f"Production {module.upper()} lancée avec succès",
-            "script": scripts[module],
-            "pid": process.pid
-        }
+            result = subprocess.run(
+                ['python', script_path],
+                input=stdin_input,
+                capture_output=True,
+                text=True,
+                cwd=os.path.dirname(script_path),
+                timeout=300  # 5 minutes max
+            )
+
+            # Vérifier si le script a réussi
+            if result.returncode != 0:
+                error_msg = result.stderr if result.stderr else "Erreur inconnue"
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Le script a échoué:\n{error_msg}\n\nStdout:\n{result.stdout}"
+                )
+
+            return {
+                "message": f"Production {module.upper()} terminée avec succès",
+                "script": scripts[module],
+                "stdout": result.stdout,
+                "stderr": result.stderr
+            }
+        except subprocess.TimeoutExpired:
+            raise HTTPException(status_code=500, detail=f"Le script a dépassé le temps d'exécution maximum (5 minutes)")
+
     except HTTPException:
         raise
     except Exception as e:

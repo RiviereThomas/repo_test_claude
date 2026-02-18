@@ -136,9 +136,13 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    alert(`Production ${module.toUpperCase()} lancée avec succès!\n\n${result.message}`);
+                    let message = `Production ${module.toUpperCase()} terminée avec succès!\n\n${result.message}`;
+                    if (result.stdout) {
+                        message += `\n\nDétails:\n${result.stdout.substring(0, 500)}`;
+                    }
+                    alert(message);
                 } else {
-                    alert(`Erreur lors du lancement de la production ${module.toUpperCase()}:\n${result.detail}`);
+                    alert(`Erreur lors de la production ${module.toUpperCase()}:\n\n${result.detail}`);
                 }
             } catch (error) {
                 alert(`Erreur de communication avec le serveur:\n${error.message}`);
