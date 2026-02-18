@@ -10,6 +10,7 @@ import dwh_connect
 from EET import eet_calculator
 import json
 import os
+import subprocess
 from datetime import datetime
 
 app = FastAPI(title="Regulatory Reports Administration")
@@ -251,6 +252,81 @@ async def health_check():
             "status": "unhealthy",
             "error": str(e)
         }
+
+
+@app.post("/api/run-production/{module}")
+async def run_production(module: str):
+    """Lance la production pour un module (EMT, TPT, EPT)"""
+    try:
+        module = module.lower()
+
+        # Définir le chemin du script à lancer selon le module
+        scripts = {
+            'emt': 'EMT/Main_EMT.py',
+            'tpt': 'TPT/Master.py',
+            'ept': 'EPT/Main_EPT.py'
+        }
+
+        if module not in scripts:
+            raise HTTPException(status_code=400, detail=f"Module {module} non reconnu. Modules disponibles: EMT, TPT, EPT")
+
+        script_path = os.path.join(os.path.dirname(__file__), scripts[module])
+
+        if not os.path.exists(script_path):
+            raise HTTPException(status_code=404, detail=f"Script {scripts[module]} introuvable")
+
+        # Lancer le script en arrière-plan
+        process = subprocess.Popen(
+            ['python', script_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=os.path.dirname(script_path)
+        )
+
+        return {
+            "message": f"Production {module.upper()} lancée avec succès",
+            "script": scripts[module],
+            "pid": process.pid
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur lors du lancement de la production: {str(e)}")
+
+
+@app.post("/api/open-archives/{module}")
+async def open_archives(module: str):
+    """Ouvre le dossier des archives pour un module (EMT, TPT, EPT)"""
+    try:
+        module = module.lower()
+
+        # Définir les chemins d'archives selon le module
+        archive_paths = {
+            'emt': r'\\10.130.1.100\mandarine\PUBLIC\MANDARINE SYSTEME DEVELOPPEMENT\Dev\5_Reporting\1_Regulatory_Reports\3_EMT\1_Archives',
+            'tpt': r'\\10.130.1.100\mandarine\PUBLIC\MANDARINE SYSTEME DEVELOPPEMENT\Dev\5_Reporting\1_Regulatory_Reports\1_TPT\1_Archives',
+            'ept': r'\\10.130.1.100\mandarine\PUBLIC\MANDARINE SYSTEME DEVELOPPEMENT\Dev\5_Reporting\1_Regulatory_Reports\2_EPT\1_Archives'
+        }
+
+        if module not in archive_paths:
+            raise HTTPException(status_code=400, detail=f"Module {module} non reconnu. Modules disponibles: EMT, TPT, EPT")
+
+        archive_path = archive_paths[module]
+
+        # Ouvrir l'explorateur de fichiers Windows sur le chemin réseau
+        subprocess.Popen(['explorer', archive_path])
+
+        return {
+            "message": f"Ouverture du dossier {module.upper()}",
+            "path": archive_path
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'ouverture du dossier: {str(e)}")
 
 
 if __name__ == "__main__":

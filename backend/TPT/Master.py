@@ -1075,7 +1075,7 @@ for Key_Fund in tqdm(Key_Fund_List, desc="Processing Funds"):
             Date_Forlder = datetime.strptime(Get_Last_Previous_Month_Date(Reporting_Date), '%Y-%d-%m').strftime('%Y-%m')
             P_D = scope_Public_Private[Mnemo]
 
-            Folder = f'S:\\Dev\\5_Reporting\\1_Regulatory_Reports\\1_TPT\\1_Archives\\{Date_Forlder}\\{P_D}'
+            Folder = f'\\\\10.130.1.100\\mandarine\\PUBLIC\\MANDARINE SYSTEME DEVELOPPEMENT\\Dev\\5_Reporting\\1_Regulatory_Reports\\1_TPT\\1_Archives\\{Date_Forlder}\\{P_D}'
             if not os.path.exists(Folder):
                 os.makedirs(Folder)
 
