@@ -7,7 +7,7 @@ from typing import List, Optional, Dict, Any
 import pandas as pd
 from sqlalchemy import text
 import dwh_connect
-import eet_calculator
+from EET import eet_calculator
 import json
 import os
 from datetime import datetime
