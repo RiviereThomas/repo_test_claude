@@ -89,11 +89,17 @@ def query_return(query_string, mavar, eet_field=None, override=False, key_fund=N
             result = controle_result(df.iloc[0, 0], verification)
         else:
             if pd.isnull(df.iloc[0, 0]):
-                result = ''
+                if dflt != '':
+                    result = dflt
+                else:
+                    result = ''
             else:
                 result = df.iloc[0, 0]
-        if inverse:
-            result = 1 - float(result)
+        if inverse == True:
+            if result == '':
+                result = ''
+            else:
+                result = 1 - float(result)
     else:
         result = ''
         if dflt != '':
@@ -168,9 +174,10 @@ def Calcul_df_final_all_parts(fund, EET_version, date_calcul='31/12/2024'):
                 lambda row: query_return(row['value_source'], [keyfund, row['field_name']], connect=cnxn), axis=1)
 
         # URLs https
-        df_calcul.loc[df_calcul['value_source'].str.startswith('https://', na=False), column] = \
-            df_calcul.loc[df_calcul['value_source'].str.startswith('https://', na=False)].apply(
-                lambda row: row['value_source'].replace('[mavar]', lib_fund_str), axis=1)
+        # gestion des https
+        df_calcul.loc[df_calcul['value_source'].str.startswith('https://'), column] = df_calcul.loc[
+            df_calcul['value_source'].str.startswith('https://')].apply(
+            lambda row: row['value_source'].replace('[mavar]', lib_fund_str), axis=1)
 
         # Tb_ESG_Histo_Ptf
         df_calcul.loc[df_calcul['value_source'].str.startswith('TABLE Tb_ESG_Histo_Ptf', na=False), column] = \
@@ -310,7 +317,8 @@ def generate_eet_excel(funds, version='EET_1_1_3', date_calcul='31/12/2024'):
     try:
         df_eet = get_eet_fields(version)
 
-        # Calculer les résultats pour tous les fonds avec toutes leurs parts
+        # Calculer le
+        # s résultats pour tous les fonds avec toutes leurs parts
         df_combined = None
         df_tmp_combined = None
 
