@@ -1,5 +1,5 @@
 // Lancer la production d'un module
-async function runProduction(module) {
+window.runProduction = async function(module) {
     const loading = document.getElementById('loading');
     loading.style.display = 'flex';
 
@@ -23,7 +23,7 @@ async function runProduction(module) {
 }
 
 // Ouvrir le dossier des archives
-async function openArchives(module) {
+window.openArchives = async function(module) {
     try {
         const response = await fetch(`/api/open-archives/${module}`, {
             method: 'POST'
