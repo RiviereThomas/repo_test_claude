@@ -4,7 +4,6 @@ import pandas as pd
 
 
 Date_Now = datetime.now()
-Date_Now = datetime(2025, 4, 10, 0, 0, 0)
 
 Date_Now_str = Date_Now.strftime('%Y-%m-%d')
 

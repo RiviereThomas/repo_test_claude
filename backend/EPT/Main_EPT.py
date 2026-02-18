@@ -49,9 +49,7 @@ print(
 mois = dernier_jour_mois_passe.strftime('%m')
 annee = dernier_jour_mois_passe.strftime('%Y')
 nom_dossier = f"{annee}-{mois}"
-chemin_dossier = os.path.join(
-    '\\\\10.130.1.100\\mandarine\\PUBLIC\\MANDARINE SYSTEME DEVELOPPEMENT\\Dev\\5_Reporting\\1_Regulatory_Reports\\2_EPT\\1_Archives\\',
-    nom_dossier)
+chemin_dossier = os.path.join('\\\\10.130.1.100\\mandarine\\PUBLIC\\MANDARINE SYSTEME DEVELOPPEMENT\\Dev\\5_Reporting\\1_Regulatory_Reports\\2_EPT\\1_Archives\\',nom_dossier)
 print(
     "=                                                                                                                                                         =")
 print(
