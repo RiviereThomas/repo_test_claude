@@ -83,6 +83,13 @@ async def eet_admin():
         return f.read()
 
 
+@app.get("/validation", response_class=HTMLResponse)
+async def validation_page():
+    """Page de validation des demandes"""
+    with open("../frontend/templates/validation.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+
 @app.get("/api/funds", response_model=List[Fund])
 async def get_funds():
     """Récupère la liste de tous les fonds"""
@@ -183,19 +190,125 @@ async def create_validation_request(request: ValidationRequest):
 
 
 @app.get("/api/validation-requests")
-async def get_validation_requests(status: Optional[str] = None):
-    """Récupère les demandes de validation"""
+async def get_validation_requests(
+    status: Optional[str] = None,
+    table_name: Optional[str] = None
+):
+    """Récupère les demandes de validation pour app='admin_reporting'"""
     try:
         engine = dwh_connect.connect_engine()
-        query = "SELECT * FROM tb_validation_requests"
+        query = "SELECT * FROM tb_validation_requests WHERE app = 'admin_reporting'"
+
         if status:
-            query += f" WHERE status = '{status}'"
+            query += f" AND status = '{status}'"
+        if table_name:
+            query += f" AND table_name = '{table_name}'"
+
         query += " ORDER BY created_at DESC"
 
         df = dwh_connect.read_sql_dataframe(query, engine)
+        # Convertir les dates en string pour JSON
+        for col in ['created_at', 'approved_at']:
+            if col in df.columns:
+                df[col] = df[col].astype(str)
         return df.to_dict('records')
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération des demandes: {str(e)}")
+
+
+@app.put("/api/validation-requests/{request_id}/approve")
+async def approve_validation_request(request_id: int, approved_by: Optional[str] = None):
+    """Approuve une demande de validation et exécute l'opération"""
+    try:
+        engine = dwh_connect.connect_engine()
+        connection = engine.connect()
+
+        # Récupérer la demande
+        query = f"SELECT * FROM tb_validation_requests WHERE id = {request_id}"
+        df = dwh_connect.read_sql_dataframe(query, engine)
+
+        if df.empty:
+            raise HTTPException(status_code=404, detail="Demande non trouvée")
+
+        request = df.iloc[0]
+
+        if request['status'] != 'PENDING':
+            raise HTTPException(status_code=400, detail="Cette demande a déjà été traitée")
+
+        # Parser les données JSON
+        data = json.loads(request['data_json']) if request['data_json'] else {}
+        where_clause = json.loads(request['where_clause_json']) if request['where_clause_json'] else {}
+
+        # Exécuter l'opération selon le type
+        if request['operation_type'] == 'INSERT':
+            dwh_connect.insert_into_table(connection, request['table_name'], data)
+        elif request['operation_type'] == 'UPDATE':
+            dwh_connect.update_table(connection, request['table_name'], data, where_clause)
+        elif request['operation_type'] == 'DELETE':
+            dwh_connect.delete_from_table(connection, request['table_name'], where_clause)
+
+        # Mettre à jour le statut de la demande
+        if not approved_by:
+            approved_by = os.environ.get('USERNAME', os.environ.get('USER', 'API_USER'))
+
+        update_data = {
+            'status': 'APPROVED',
+            'approved_at': datetime.now(),
+            'approved_by': approved_by
+        }
+        dwh_connect.update_table(connection, 'tb_validation_requests', update_data, {'id': request_id})
+
+        return {
+            "message": "Demande approuvée et exécutée avec succès",
+            "request_id": request_id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'approbation: {str(e)}")
+
+
+class RejectRequest(BaseModel):
+    rejection_reason: str
+
+
+@app.put("/api/validation-requests/{request_id}/reject")
+async def reject_validation_request(
+    request_id: int,
+    reject_data: RejectRequest,
+    rejected_by: Optional[str] = None
+):
+    """Rejette une demande de validation"""
+    try:
+        engine = dwh_connect.connect_engine()
+        connection = engine.connect()
+
+        # Vérifier que la demande existe et est en attente
+        query = f"SELECT status FROM tb_validation_requests WHERE id = {request_id}"
+        df = dwh_connect.read_sql_dataframe(query, engine)
+
+        if df.empty:
+            raise HTTPException(status_code=404, detail="Demande non trouvée")
+
+        if df.iloc[0]['status'] != 'PENDING':
+            raise HTTPException(status_code=400, detail="Cette demande a déjà été traitée")
+
+        if not rejected_by:
+            rejected_by = os.environ.get('USERNAME', os.environ.get('USER', 'API_USER'))
+
+        # Mettre à jour le statut de la demande
+        update_data = {
+            'status': 'REJECTED',
+            'approved_at': datetime.now(),
+            'approved_by': rejected_by,
+            'rejection_reason': reject_data.rejection_reason
+        }
+        dwh_connect.update_table(connection, 'tb_validation_requests', update_data, {'id': request_id})
+
+        return {
+            "message": "Demande rejetée avec succès",
+            "request_id": request_id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors du rejet: {str(e)}")
 
 
 @app.get("/api/fund-results/{fund}")

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validation des Demandes - EET</title>
+    <link rel="stylesheet" href="/static/css/home.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #1B998B; --primary-dark: #158073;
+            --secondary: #F18F01; --success: #3FA535;
+            --warning: #F7AD00; --danger: #e74c3c; --info: #2C7BE5;
+            --bg-primary: #f8f9fa; --bg-secondary: #ffffff;
+            --text-primary: #2c3e50; --text-secondary: #6c757d;
+            --border: #dee2e6; --shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        body.dark-mode {
+            --bg-primary: #1a1d23; --bg-secondary: #22262e;
+            --text-primary: #e9ecef; --text-secondary: #adb5bd;
+            --border: #343a40; --shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary); color: var(--text-primary);
+            line-height: 1.6; transition: all 0.3s ease;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white; padding: 1rem 2rem; box-shadow: var(--shadow);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .header h1 { font-size: 1.4rem; font-weight: 500; }
+        .header-actions { display: flex; gap: 1rem; align-items: center; }
+        .btn {
+            padding: 0.5rem 1rem; border: none; border-radius: 6px; font-size: 0.875rem;
+            cursor: pointer; transition: all 0.3s; display: inline-flex;
+            align-items: center; gap: 0.5rem; text-decoration: none;
+        }
+        .btn-secondary { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.3); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.8rem; }
+        .theme-toggle { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.5rem 1rem; border-radius: 20px; cursor: pointer; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid var(--border); padding-bottom: 1rem; }
+        .page-title { font-size: 1.5rem; font-weight: 600; }
+
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--bg-secondary); padding: 1.25rem; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+        .stat-value { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .stat-pending { color: var(--warning); }
+        .stat-approved { color: var(--success); }
+        .stat-rejected { color: var(--danger); }
+        .stat-label { color: var(--text-secondary); font-size: 0.85rem; }
+
+        .filters { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .filter-select { padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); }
+
+        .requests-list { display: flex; flex-direction: column; gap: 1rem; }
+        .request-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .request-header { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .request-type { display: flex; align-items: center; gap: 0.75rem; }
+        .request-badge { padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem; font-weight: 600; }
+        .badge-insert { background: rgba(63, 165, 53, 0.15); color: var(--success); }
+        .badge-update { background: rgba(247, 173, 0, 0.15); color: var(--warning); }
+        .badge-delete { background: rgba(231, 76, 60, 0.15); color: var(--danger); }
+        .request-status { padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.75rem; font-weight: 600; }
+        .status-pending { background: rgba(247, 173, 0, 0.15); color: var(--warning); }
+        .status-approved { background: rgba(63, 165, 53, 0.15); color: var(--success); }
+        .status-rejected { background: rgba(231, 76, 60, 0.15); color: var(--danger); }
+
+        .request-body { padding: 1rem 1.5rem; }
+
+        .request-description {
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .request-description strong {
+            color: var(--text-primary);
+        }
+        .request-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .meta-item { }
+        .meta-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.25rem; }
+        .meta-value { font-size: 0.9rem; }
+
+        .json-section { margin-top: 1rem; }
+        .json-toggle { background: none; border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; color: var(--text-secondary); font-size: 0.85rem; }
+        .json-toggle:hover { background: var(--bg-primary); }
+        .json-content { display: none; margin-top: 0.5rem; padding: 1rem; background: var(--bg-primary); border-radius: 6px; font-family: monospace; font-size: 0.8rem; white-space: pre-wrap; overflow-x: auto; }
+        .json-content.visible { display: block; }
+
+        .request-actions { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; justify-content: flex-end; }
+
+        /* User Info - Fixed bottom right */
+        .user-info {
+            position: fixed; bottom: 1.5rem; right: 1.5rem;
+            display: flex; align-items: center; gap: 0.75rem;
+            background: var(--bg-secondary); padding: 0.5rem 1rem;
+            border-radius: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000; border: 1px solid var(--border);
+        }
+        .user-avatar {
+            width: 32px; height: 32px; background: var(--primary); color: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 0.8rem;
+        }
+        .user-name { font-weight: 500; font-size: 0.9rem; color: var(--text-primary); }
+
+        .toast {
+            position: fixed; bottom: 5rem; right: 1.5rem;
+            padding: 1rem 1.5rem; border-radius: 8px; color: white;
+            z-index: 2000; animation: slideIn 0.3s ease;
+        }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        .toast.info { background: var(--info); }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 3000; justify-content: center; align-items: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--bg-secondary); border-radius: 12px; width: 90%; max-width: 450px; }
+        .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 1.1rem; }
+        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); }
+        .modal-body { padding: 1.5rem; }
+        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
+        .form-group textarea { width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-primary); color: var(--text-primary); resize: vertical; min-height: 80px; }
+
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary); }
+
+        /* Login Modal */
+        .login-modal {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            z-index: 2000; justify-content: center; align-items: center;
+        }
+        .login-modal.active { display: flex; }
+        .login-box {
+            background: var(--bg-secondary); border-radius: 16px; padding: 2.5rem;
+            width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;
+        }
+        .login-logo { font-size: 3rem; margin-bottom: 1rem; }
+        .login-title { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .login-subtitle { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem; }
+        .login-input {
+            width: 100%; padding: 0.875rem 1rem; border: 2px solid var(--border); border-radius: 8px;
+            background: var(--bg-primary); color: var(--text-primary); font-size: 1rem; margin-bottom: 1rem;
+        }
+        .login-input:focus { outline: none; border-color: var(--primary); }
+        .login-btn {
+            width: 100%; padding: 0.875rem; background: var(--primary); color: white;
+            border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;
+        }
+        .login-btn:hover { background: var(--primary-dark); }
+        .login-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <!-- Login Modal -->
+    <div id="loginModal" class="login-modal">
+        <div class="login-box">
+            <div class="login-logo">✅</div>
+            <h2 class="login-title">Validation EET</h2>
+            <p class="login-subtitle">Connectez-vous avec votre identifiant</p>
+            <form id="loginForm">
+                <input type="text" id="loginUsername" class="login-input" placeholder="Identifiant (ex: jdupont)" autocomplete="username" required>
+                <button type="submit" class="login-btn" id="loginBtn">Se connecter</button>
+            </form>
+        </div>
+    </div>
+
+    <header class="header">
+        <h1>✅ Validation des Demandes EET</h1>
+        <div class="header-actions">
+            <a href="/" class="btn btn-secondary">📊 Accueil</a>
+            <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h2 class="page-title">Demandes en attente de validation</h2>
+            <button class="btn btn-primary" onclick="refreshData()">🔄 Actualiser</button>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-card"><div class="stat-value stat-pending" id="countPending">0</div><div class="stat-label">En attente</div></div>
+            <div class="stat-card"><div class="stat-value stat-approved" id="countApproved">0</div><div class="stat-label">Approuvées</div></div>
+            <div class="stat-card"><div class="stat-value stat-rejected" id="countRejected">0</div><div class="stat-label">Rejetées</div></div>
+        </div>
+
+        <div class="filters">
+            <select class="filter-select" id="filterStatus" onchange="loadRequests()">
+                <option value="">Tous les statuts</option>
+                <option value="PENDING" selected>En attente</option>
+                <option value="APPROVED">Approuvées</option>
+                <option value="REJECTED">Rejetées</option>
+            </select>
+            <select class="filter-select" id="filterTable" onchange="loadRequests()">
+                <option value="">Toutes les tables</option>
+                <option value="tb_eet_fields">Champs EET</option>
+            </select>
+        </div>
+
+        <div class="requests-list" id="requestsList">
+            <div class="empty-state">Chargement...</div>
+        </div>
+    </div>
+
+    <!-- Modal de rejet -->
+    <div class="modal-overlay" id="rejectModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Rejeter la demande</h3>
+                <button class="modal-close" onclick="closeModal('rejectModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="rejectRequestId">
+                <div class="form-group">
+                    <label>Motif du rejet *</label>
+                    <textarea id="rejectionReason" placeholder="Expliquez pourquoi cette demande est rejetée..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('rejectModal')">Annuler</button>
+                <button class="btn btn-danger" onclick="submitReject()">Rejeter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Info Badge -->
+    <div class="user-info">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <span class="user-name" id="userName">Chargement...</span>
+    </div>
+
+    <script>
+        const API_URL = '/api';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            applyTheme();
+            checkAuth();
+        });
+
+        // =================== Authentification ===================
+        function checkAuth() {
+            const username = sessionStorage.getItem('eet_username');
+            if (!username) {
+                showLoginModal();
+            } else {
+                loadUserInfo(username);
+                initApp();
+            }
+        }
+
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.add('active');
+        }
+
+        function hideLoginModal() {
+            document.getElementById('loginModal').classList.remove('active');
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim().toLowerCase();
+
+            if (!username) {
+                showToast('Veuillez entrer votre identifiant', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.textContent = 'Connexion...';
+
+            try {
+                sessionStorage.setItem('eet_username', username);
+                displayUserInfo({ username: username, display_name: username });
+                hideLoginModal();
+                initApp();
+
+                showToast(`Bienvenue ${username} !`, 'success');
+            } catch (error) {
+                console.error('Erreur login:', error);
+                showToast('Erreur de connexion', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Se connecter';
+            }
+        });
+
+        async function loadUserInfo(username) {
+            displayUserInfo({ username: username, display_name: username });
+        }
+
+        function displayUserInfo(userInfo) {
+            document.getElementById('userName').textContent = userInfo.display_name || userInfo.username;
+            const name = userInfo.display_name || userInfo.username || 'U';
+            const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+            document.getElementById('userAvatar').textContent = initials;
+        }
+
+        function getCurrentUsername() {
+            return sessionStorage.getItem('eet_username') || '';
+        }
+
+        function initApp() {
+            loadRequests();
+        }
+
+        // =================== API ===================
+        async function api(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_URL}${endpoint}`, {
+                    headers: { 'Content-Type': 'application/json' },
+                    ...options
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                showToast('Erreur de connexion', 'error');
+                return null;
+            }
+        }
+
+        async function loadRequests() {
+            const status = document.getElementById('filterStatus').value;
+            const table = document.getElementById('filterTable').value;
+
+            let url = '/validation-requests?';
+            if (status) url += `status=${status}&`;
+            if (table) url += `table_name=${table}&`;
+
+            const requests = await api(url);
+            if (requests) {
+                updateStats(requests);
+                renderRequests(requests);
+            }
+        }
+
+        function updateStats(requests) {
+            // Recharger toutes les demandes pour les stats si on a des filtres
+            api('/validation-requests').then(allRequests => {
+                if (allRequests) {
+                    document.getElementById('countPending').textContent = allRequests.filter(r => r.status === 'PENDING').length;
+                    document.getElementById('countApproved').textContent = allRequests.filter(r => r.status === 'APPROVED').length;
+                    document.getElementById('countRejected').textContent = allRequests.filter(r => r.status === 'REJECTED').length;
+                }
+            });
+        }
+
+        function renderRequests(requests) {
+            const container = document.getElementById('requestsList');
+
+            if (!requests || requests.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div style="font-size:3rem;opacity:0.3;margin-bottom:1rem;">✅</div><h3>Aucune demande</h3><p>Toutes les demandes ont été traitées</p></div>';
+                return;
+            }
+
+            container.innerHTML = requests.map(r => {
+                const badgeClass = r.operation_type === 'INSERT' ? 'badge-insert' : r.operation_type === 'UPDATE' ? 'badge-update' : 'badge-delete';
+                const statusClass = r.status === 'PENDING' ? 'status-pending' : r.status === 'APPROVED' ? 'status-approved' : 'status-rejected';
+                const data = r.data || (r.data_json ? JSON.parse(r.data_json) : {});
+                const where = r.where_clause || (r.where_clause_json ? JSON.parse(r.where_clause_json) : {});
+                const description = generateDescription(r, data, where);
+
+                return `
+                    <div class="request-card">
+                        <div class="request-header">
+                            <div class="request-type">
+                                <span class="request-badge ${badgeClass}">${r.operation_type}</span>
+                                <span style="font-weight:600;">${formatTableName(r.table_name)}</span>
+                            </div>
+                            <span class="request-status ${statusClass}">${r.status}</span>
+                        </div>
+                        ${description ? `<div class="request-description">${description}</div>` : ''}
+                        <div class="request-body">
+                            <div class="request-meta">
+                                <div class="meta-item"><div class="meta-label">Créé par</div><div class="meta-value">${r.created_by || '-'}</div></div>
+                                <div class="meta-item"><div class="meta-label">Date</div><div class="meta-value">${formatDateTime(r.created_at)}</div></div>
+                                <div class="meta-item"><div class="meta-label">Motif</div><div class="meta-value">${r.creation_reason || '-'}</div></div>
+                            </div>
+                            ${r.status === 'REJECTED' ? `<div class="meta-item" style="margin-top:0.5rem;"><div class="meta-label">Motif du rejet</div><div class="meta-value" style="color:var(--danger);">${r.rejection_reason || '-'}</div></div>` : ''}
+                            ${r.approved_at ? `<div class="meta-item" style="margin-top:0.5rem;"><div class="meta-label">Traité le</div><div class="meta-value">${formatDateTime(r.approved_at)} par ${r.approved_by || '-'}</div></div>` : ''}
+                            <div class="json-section">
+                                <button class="json-toggle" onclick="toggleJson('json-${r.id}')">📄 Voir les données</button>
+                                <div class="json-content" id="json-${r.id}">
+<strong>Données:</strong>
+${JSON.stringify(data, null, 2)}
+${Object.keys(where).length > 0 ? `\n\n<strong>Conditions:</strong>\n${JSON.stringify(where, null, 2)}` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        ${r.status === 'PENDING' ? `
+                            <div class="request-actions">
+                                <button class="btn btn-primary btn-sm" onclick="approveRequest(${r.id})">✅ Approuver</button>
+                                <button class="btn btn-danger btn-sm" onclick="openRejectModal(${r.id})">❌ Rejeter</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function generateDescription(request, data, where) {
+            const op = request.operation_type;
+            const table = request.table_name;
+
+            if (table === 'tb_eet_fields') {
+                const fieldName = data.field_name || where.field_name || 'Champ inconnu';
+                if (op === 'INSERT') {
+                    return `Ajout du champ "<strong>${fieldName}</strong>"`;
+                } else if (op === 'UPDATE') {
+                    return `Modification du champ "<strong>${fieldName}</strong>"`;
+                } else if (op === 'DELETE') {
+                    return `Suppression du champ "<strong>${fieldName}</strong>"`;
+                }
+            }
+
+            return '';
+        }
+
+        function toggleJson(id) {
+            document.getElementById(id).classList.toggle('visible');
+        }
+
+        async function approveRequest(id) {
+            if (!confirm('Approuver et exécuter cette demande ?')) return;
+            const username = getCurrentUsername();
+            const result = await api(`/validation-requests/${id}/approve?approved_by=${encodeURIComponent(username)}`, { method: 'PUT' });
+            if (result) {
+                showToast('Demande approuvée et exécutée', 'success');
+                loadRequests();
+            }
+        }
+
+        function openRejectModal(id) {
+            document.getElementById('rejectRequestId').value = id;
+            document.getElementById('rejectionReason').value = '';
+            document.getElementById('rejectModal').classList.add('active');
+        }
+
+        async function submitReject() {
+            const id = document.getElementById('rejectRequestId').value;
+            const reason = document.getElementById('rejectionReason').value;
+            if (!reason) { showToast('Le motif est obligatoire', 'error'); return; }
+            const username = getCurrentUsername();
+            const result = await api(`/validation-requests/${id}/reject?rejected_by=${encodeURIComponent(username)}`, {
+                method: 'PUT',
+                body: JSON.stringify({ rejection_reason: reason })
+            });
+            if (result) {
+                showToast('Demande rejetée', 'info');
+                closeModal('rejectModal');
+                loadRequests();
+            }
+        }
+
+        // =================== Helpers ===================
+        function formatTableName(name) {
+            const map = {
+                'tb_eet_fields': 'Champs EET'
+            };
+            return map[name] || name;
+        }
+
+        function formatDateTime(str) {
+            if (!str || str === 'None' || str === 'null') return '-';
+            try { return new Date(str).toLocaleString('fr-FR'); } catch { return str; }
+        }
+
+        function refreshData() {
+            loadRequests();
+            showToast('Données actualisées', 'info');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.querySelector('.theme-toggle').textContent = isDark ? '☀️' : '🌙';
+        }
+
+        function applyTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const isDark = savedTheme ? savedTheme === 'dark' : true;
+            if (isDark) document.body.classList.add('dark-mode');
+            document.querySelector('.theme-toggle').textContent = isDark ? '☀️' : '🌙';
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+    </script>
+</body>
+</html>
