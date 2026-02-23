@@ -16,6 +16,7 @@ const state = {
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {
+    setDefaultCalcDate(); // Définir la date immédiatement
     initializeApp();
     setupEventListeners();
 });
@@ -24,7 +25,6 @@ async function initializeApp() {
     await loadVersions();
     await loadFunds();
     setupSortListeners();
-    setDefaultCalcDate();
 }
 
 // Définir la date par défaut à la fin de l'année précédente
@@ -34,6 +34,7 @@ function setDefaultCalcDate() {
         const currentYear = new Date().getFullYear();
         const lastYearEnd = `${currentYear - 1}-12-31`;
         dateInput.value = lastYearEnd;
+        console.log('Date par défaut définie:', lastYearEnd);
     }
 }
 
