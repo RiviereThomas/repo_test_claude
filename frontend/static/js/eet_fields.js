@@ -28,6 +28,19 @@ async function initializeApp() {
 
     // Appliquer les filtres par défaut (version EET_1_1_3)
     applyFilters();
+
+    // Définir la date par défaut
+    setDefaultCalcDate();
+}
+
+// Définir la date par défaut à la fin de l'année précédente
+function setDefaultCalcDate() {
+    const dateInput = document.getElementById('date-filter');
+    if (dateInput) {
+        const currentYear = new Date().getFullYear();
+        const lastYearEnd = `${currentYear - 1}-12-31`;
+        dateInput.value = lastYearEnd;
+    }
 }
 
 // Configuration des écouteurs d'événements

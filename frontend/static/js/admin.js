@@ -24,6 +24,17 @@ async function initializeApp() {
     await loadVersions();
     await loadFunds();
     setupSortListeners();
+    setDefaultCalcDate();
+}
+
+// Définir la date par défaut à la fin de l'année précédente
+function setDefaultCalcDate() {
+    const dateInput = document.getElementById('calc-date');
+    if (dateInput) {
+        const currentYear = new Date().getFullYear();
+        const lastYearEnd = `${currentYear - 1}-12-31`;
+        dateInput.value = lastYearEnd;
+    }
 }
 
 function setupEventListeners() {
