@@ -36,6 +36,10 @@
                         <span class="btn-icon">⚙️</span>
                         <span class="btn-label">Administration</span>
                     </a>
+                    <a href="/eet-admin" class="module-btn btn-warning" id="validation-pending-btn">
+                        <span class="btn-icon">⏳</span>
+                        <span class="btn-label">Validation en attente (<span id="pending-count">...</span>)</span>
+                    </a>
                     <a href="https://datapartner.fefundinfo.com/format-validator" target="_blank" class="module-btn btn-accent">
                         <span class="btn-icon">✓</span>
                         <span class="btn-label">Contrôle (Fund info portal)</span>
@@ -170,6 +174,19 @@
             }
         }
 
+        // Charger le nombre de validations en attente
+        async function loadPendingValidationCount() {
+            try {
+                const response = await fetch('/api/validation-requests?status=PENDING');
+                const requests = await response.json();
+                const count = Array.isArray(requests) ? requests.length : 0;
+                document.getElementById('pending-count').textContent = count;
+            } catch (error) {
+                console.error('Erreur lors du chargement des validations en attente:', error);
+                document.getElementById('pending-count').textContent = '?';
+            }
+        }
+
         // Afficher le loader au clic sur les liens
         document.addEventListener('DOMContentLoaded', () => {
             // Sélectionner tous les liens actifs (pas les boutons disabled)
@@ -184,6 +201,9 @@
                     }
                 });
             });
+
+            // Charger le nombre de validations en attente
+            loadPendingValidationCount();
         });
     </script>
 </body>
